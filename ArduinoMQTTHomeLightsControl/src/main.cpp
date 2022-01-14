@@ -53,7 +53,8 @@ VERSION NOTES:
           - light state boradcasted in format: "on,255,255-255-255" (on/off + brightness + RGB brightnesses)
           - tested with HA light MQTT component (template) - payload sent as string
           - 
-
+0,6,3 - MQTT improvements:
+          - payload as JSON
 
 
 */
@@ -67,6 +68,7 @@ VERSION NOTES:
 #include <PubSubClient.h>
 #include <EEPROM.h>
 #include <string.h>
+#include <ArduinoJson.h>
 
 // Serial prints only in this mode (under implementation)
 #define debugOn 0
@@ -324,6 +326,43 @@ void mqttPublishState(String topic, uint8_t key, uint8_t keyState)
   }
 }
 
+void mqttPublishStateJson(String topic, uint8_t key, uint8_t keyState)
+{   
+  DynamicJsonDocument doc(1024);
+
+  //String payloadStr = "\0";
+  String keyStr = String(key).c_str();
+  //String ledStateStr= ledState ? "OFF" : "ON";
+  if (key>=100)
+  {
+      doc["state"] = keyState ? "off" : "on";
+      doc["brightness"] = 255;
+  }
+  else
+  {
+      doc["state"] = keyState ? "Held down" : "Pressed";
+  }
+
+  char topicChar[50] = {"\0"};
+  String topicStr = String(topic).c_str();  
+  topicStr = topicStr + "/" + keyStr;
+  topicStr.toCharArray(topicChar,topicStr.length()+1);
+  char payloadChar[128] = {"\0"};
+  int b =serializeJson(doc, payloadChar);
+  Serial.print("bytes = ");
+  Serial.println(b,DEC);
+  boolean publishResult = mqttClient.publish(topicChar, payloadChar, true);
+  if (debugOn)
+  {
+    Serial.print("Published message: ");
+    //Serial.print(payloadStr);
+    Serial.print(" to topic: ");
+    Serial.print(topicStr);
+    Serial.print(" with the result: ");
+    Serial.println(publishResult);
+  }
+}
+
 
 //This is going to be executed when MQTT message arrives
 void callback(char* topic, byte* payload, unsigned int length) 
@@ -364,8 +403,8 @@ void callback(char* topic, byte* payload, unsigned int length)
       payloadInt = ON;
       ioDeviceDigitalWrite(multiIo, mqttKey, payloadInt);
       saveLedStatesToEeprom(mqttKey,payloadInt); 
-      //mqttPublishState(ledStateTopic, mqttKey, ledState);
-      mqttPublishState(ledStateTopic, mqttKey, payloadInt);
+      //mqttPublishState(ledStateTopic, mqttKey, payloadInt);
+      mqttPublishStateJson(ledStateTopic, mqttKey, payloadInt);
       Serial.println("Led turned on by MQTT message");
     }
     else if (payloadTemp.equals("0")||payloadTemp.equals("OFF")||payloadTemp.equals("off"))
@@ -373,8 +412,8 @@ void callback(char* topic, byte* payload, unsigned int length)
       payloadInt = OFF;
       ioDeviceDigitalWrite(multiIo, mqttKey, payloadInt);
       saveLedStatesToEeprom(mqttKey,payloadInt);
-      //mqttPublishState(ledStateTopic, mqttKey, ledState);
-      mqttPublishState(ledStateTopic, mqttKey, payloadInt);
+      //mqttPublishState(ledStateTopic, mqttKey, payloadInt);
+      mqttPublishStateJson(ledStateTopic, mqttKey, payloadInt);
       Serial.println("Led turned off by MQTT message");
     }
   }
@@ -395,7 +434,8 @@ void onSwitchPressed(uint8_t key, bool held)
             { 
               ioDeviceDigitalWrite(multiIo, button2leds[i][j], OFF);
               saveLedStatesToEeprom(button2leds[i][j],OFF);
-              mqttPublishState(ledStateTopic, button2leds[i][j], OFF);
+              //mqttPublishState(ledStateTopic, button2leds[i][j], OFF);
+              mqttPublishStateJson(ledStateTopic, button2leds[i][j], OFF);
               Serial.print("Led turned off: ");
               Serial.println(button2leds[i][j]);
             }
@@ -435,7 +475,8 @@ void onSwitchPressed(uint8_t key, bool held)
               Serial.println(!ledState);
             }
             saveLedStatesToEeprom(button2leds[i][j],!ledState);
-            mqttPublishState(ledStateTopic, button2leds[i][j], !ledState);
+            //mqttPublishState(ledStateTopic, button2leds[i][j], !ledState);
+            mqttPublishStateJson(ledStateTopic, button2leds[i][j], !ledState);
           }
         }
       }
@@ -444,7 +485,8 @@ void onSwitchPressed(uint8_t key, bool held)
       Serial.print(key);
       Serial.println(held ? " Held down" : " Pressed");
       //serialPrintEeprom();
-      mqttPublishState(switchStateTopic, key, held);
+      //mqttPublishState(switchStateTopic, key, held);
+      mqttPublishStateJson(switchStateTopic, key, held);
     }
 }
 
