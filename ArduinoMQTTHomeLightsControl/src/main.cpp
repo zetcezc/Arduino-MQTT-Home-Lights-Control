@@ -56,6 +56,9 @@ VERSION NOTES:
 0,6,3 - MQTT improvements:
           - payload as JSON
 
+0.6.4 - MQTT improvements
+          - autodiscovery of leds
+
 
 */
 
@@ -81,6 +84,8 @@ VERSION NOTES:
 //define ON/OFF for low triggered output PINs
 #define ON 0
 #define OFF 1
+#define ledsAutoDiscovery 1
+#define switchesAutoDiscovery 1
 
 //Setting up Ethernet shield
 byte mac[] = { 0xDE, 0xAD, 0xBE, 0xEF, 0xFE, 0xAD };
@@ -89,7 +94,7 @@ IPAddress myDns(192, 168, 1, 1); //DNS ip
 IPAddress mqttBrokerIp(192, 168, 1, 11); // MQTT broker IP adress
 #define mqttUser "homeassistant"
 #define mqttPasswd "aih1xo6oqueazeSa5oojootebo6Baj0aochizeThaighieghahdieBeco7phei7s"
-char message_buff[100];
+//char message_buff[100];
 
 // to make life easier, probably define each expander
 #define EXPANDER1 100
@@ -100,19 +105,27 @@ MultiIoAbstractionRef multiIo = multiIoExpander(EXPANDER1);
 EthernetClient ethClient;
 PubSubClient mqttClient(mqttBrokerIp, 1883, ethClient);
 
+struct led
+{ 
+  uint8_t ledNo;
+  boolean ledState;
+  boolean ledAutoDiscovery;
+  char ledName[10];
+};
+
 //initiate table of leds (Expander PINS) - output. Max = 8x8=64 on PCF8574's
 //define initial state. Will be used if no EEPROM value found.
-uint8_t leds[][2] = 
-  {  {100,OFF},{101,OFF},{102,OFF},{103,OFF},{104,OFF},{105,OFF},{106,OFF},{107,OFF}
-    ,{110,OFF},{111,OFF},{112,OFF},{113,OFF},{114,OFF},{115,OFF},{116,OFF},{117,OFF}
-    ,{120,OFF},{121,OFF},{122,OFF},{123,OFF},{124,OFF},{125,OFF},{126,OFF},{127,OFF}
-    ,{130,OFF},{131,OFF},{132,OFF},{133,OFF},{134,OFF},{135,OFF},{136,OFF},{137,OFF}
-    ,{140,OFF},{141,OFF},{142,OFF},{143,OFF},{144,OFF},{145,OFF},{146,OFF},{147,OFF}
-    ,{150,OFF},{151,OFF},{152,OFF},{153,OFF},{154,OFF},{155,OFF},{156,OFF},{157,OFF}
-    //,{160,OFF},{161,OFF},{162,OFF},{163,OFF},{164,OFF},{165,OFF},{166,OFF},{167,OFF}
-    //,{170,OFF},{171,OFF},{172,OFF},{173,OFF},{174,OFF},{175,OFF},{176,OFF},{177,OFF}
+//By default ledAutoDiscovery is set to 0. Change to 1 for leds that shoudl be visible in HomeAssistant.
+led leds[] = 
+  {  {100,OFF,1,"Led 100"},{101,OFF,1,"Led 101"},{102,OFF,1,"Led 102"},{103,OFF,0,"Led 103"},{104,OFF,0,"Led 104"},{105,OFF,0,"Led 105"},{106,OFF,0,"Led 106"},{107,OFF,0,"Led 107"}
+    ,{110,OFF,0,"Led 110"},{111,OFF,0,"Led 111"},{112,OFF,0,"Led 112"},{113,OFF,0,"Led 113"},{114,OFF,0,"Led 114"},{115,OFF,0,"Led 115"},{116,OFF,0,"Led 116"},{117,OFF,0,"Led 117"}
+    ,{120,OFF,0,"Led 120"},{121,OFF,0,"Led 121"},{122,OFF,0,"Led 122"},{123,OFF,0,"Led 123"},{124,OFF,0,"Led 124"},{125,OFF,0,"Led 125"},{126,OFF,0,"Led 126"},{127,OFF,0,"Led 127"}
+    ,{130,OFF,0,"Led 130"},{131,OFF,0,"Led 131"},{132,OFF,0,"Led 132"},{133,OFF,0,"Led 133"},{134,OFF,0,"Led 134"},{135,OFF,0,"Led 135"},{136,OFF,0,"Led 136"},{137,OFF,0,"Led 137"}
+    ,{140,OFF,0,"Led 140"},{141,OFF,0,"Led 141"},{142,OFF,0,"Led 142"},{143,OFF,0,"Led 143"},{144,OFF,0,"Led 144"},{145,OFF,0,"Led 145"},{146,OFF,0,"Led 146"},{147,OFF,0,"Led 147"}
+    ,{150,OFF,0,"Led 150"},{151,OFF,0,"Led 151"},{152,OFF,0,"Led 152"},{153,OFF,0,"Led 153"},{154,OFF,0,"Led 154"},{155,OFF,0,"Led 155"},{156,OFF,0,"Led 156"},{157,OFF,0,"Led 157"}
+    //,{160,OFF,0,"Led 160"},{161,OFF,0,"Led 161"},{162,OFF,0,"Led 162"},{163,OFF,0,"Led 163"},{164,OFF,0,"Led 164"},{165,OFF,0,"Led 165"},{166,OFF,0,"Led 166"},{167,OFF,0,"Led 167"}
+    //,{170,OFF,0,"Led 170"},{171,OFF,0,"Led 171"},{172,OFF,0,"Led 172"},{173,OFF,0,"Led 173"},{174,OFF,0,"Led 174"},{175,OFF,0,"Led 175"},{176,OFF,0,"Led 176"},{177,OFF,0,"Led 177"}
   };
-
 
 //Define number of switches (outputs/LEDs)
 size_t noOfLeds = sizeof(leds) / sizeof(leds[0]);
@@ -173,7 +186,7 @@ int16_t  button2leds[][maxNoOfLedsPerButton+1] =
     {47,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1},
     {48,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1},
     {49,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1},
-    {54,101,112,123,134,145,156,-1,-1,-1,-1}, //A0
+    {54,100,101,102,-1,-1,-1,-1,-1,-1,-1}, //A0
     {55,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1}, //A1
     {56,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1}, //A2
     {57,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1}, //A3
@@ -188,7 +201,7 @@ int16_t  button2leds[][maxNoOfLedsPerButton+1] =
     {66,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1}, //A12
     {67,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1}, //A13
     {68,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1}, //A14
-    {90,113,-1,-1,-1,-1,-1,-1,-1,-1,-1}, //MQTT virtual switch test
+    //{90,113,-1,-1,-1,-1,-1,-1,-1,-1,-1}, //MQTT virtual switch test
     //{99,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1}, //MQTT test - all leds sequence
     {100,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1}, //to make outputs on expander 0x20 work
     {110,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1},  //to make outputs on expander 0x21 work
@@ -214,7 +227,7 @@ void serialPrintEeprom()
 {
    for (size_t i = 0; i < noOfLeds; ++i) 
     {
-      Serial.print(leds[i][0]);
+      Serial.print(leds[i].ledNo);
       Serial.print(" = ");
       Serial.println(EEPROM.read(i));
     }
@@ -224,11 +237,11 @@ void saveLedStatesToEeprom(uint8_t switchedLed, uint8_t ledState)
 {
   for (size_t i=0; i<noOfLeds; i++)
   {
-    if (leds[i][0] == switchedLed)
+    if (leds[i].ledNo == switchedLed)
     {
-      leds[i][1] = ledState;
+      leds[i].ledState = ledState;
     } 
-    EEPROM.update(i,leds[i][1]);
+    EEPROM.update(i,leds[i].ledState);
   }
   
 }
@@ -289,36 +302,47 @@ int8_t mqttSubscribeToTopic(String topic, uint16_t key)
   return  subscribeResult;
 }
 
-// Publish ledState as payload to MQTT topic named topic/key
-void mqttPublishState(String topic, uint8_t key, uint8_t keyState)
-{   
-  String payloadStr = "\0";
+// Publish keyState as payload to MQTT topic named topic/key
+void mqttPublishState(String topic, uint16_t key, uint8_t keyState)
+{ 
+  //DynamicJsonDocument doc(1024);
+  StaticJsonDocument<512> doc;
   String keyStr = String(key).c_str();
-  //String ledStateStr= ledState ? "OFF" : "ON";
+  //Serial.print("Key in mqqPublish = ");
+  //Serial.println(key);
   if (key>=100)
-  {
-    String keyStateStr= keyState ? "off" : "on";
-    payloadStr = keyStateStr + ",255,255-255-255";
+  {   //Serial.println("I'm in if");
+      doc["state"] = keyState ? "off" : "on";
+      //Serial.print("keyState = ");
+      //Serial.println(keyState);    
+      //doc1["brightness"] = 255;
   }
   else
   {
-    String keyStateStr= keyState ? "Held down" : "Pressed";
-    payloadStr = keyStateStr;
+      doc["state"] = keyState ? "held_down" : "pressed";
   }
-
+  //Serial.print("Before serialize ");
+  //Serial.print("doc[state] = ");
+  //Serial.println((char*)doc["state"]);
   char topicChar[50] = {"\0"};
   String topicStr = String(topic).c_str();  
   topicStr = topicStr + "/" + keyStr;
   topicStr.toCharArray(topicChar,topicStr.length()+1);
-  //ledStateStr.toLowerCase();
-  //String payloadStr = keyStateStr + ",255,255-255-255";
-  char payloadChar[20] = {"\0"};
-  payloadStr.toCharArray(payloadChar,payloadStr.length()+1);
-  int8_t publishResult = mqttClient.publish(topicChar, payloadChar, true);
+  char payloadChar[512] = {"\0"};
+  int b =serializeJson(doc, payloadChar);
+  //Serial.print("bytes = ");
+  //Serial.println(b,DEC);
+  //Serial.print("After serialize ");
+  //Serial.print("doc[state] = ");
+  //Serial.println((char*)doc["state"]);
+  boolean publishResult = mqttClient.publish(topicChar, payloadChar, true);  
+  //Serial.print("payloadChar = ");
+  //Serial.println(payloadChar);
+  
   if (debugOn)
   {
     Serial.print("Published message: ");
-    Serial.print(payloadStr);
+    Serial.println(payloadChar);
     Serial.print(" to topic: ");
     Serial.print(topicStr);
     Serial.print(" with the result: ");
@@ -326,36 +350,68 @@ void mqttPublishState(String topic, uint8_t key, uint8_t keyState)
   }
 }
 
-void mqttPublishStateJson(String topic, uint8_t key, uint8_t keyState)
-{   
-  DynamicJsonDocument doc(1024);
+/*
 
-  //String payloadStr = "\0";
+działający:
+{   "platform": "mqtt",
+    "schema": "template",
+    "unique_id": "light_102",
+    "name": "Led 102C",
+    "command_topic": "arduino01/led/set/102",
+    "state_topic": "arduino01/led/state/102",
+    "command_on_template": "{\"state\":\"on\"}",
+    "command_off_template": "{\"state\":\"off\"}",
+    "state_template": "{{ value_json.state }}",
+    "qos": "1",
+    "retain": "TRUE"
+}
+
+    */
+
+void mqttSendAutoDiscovery(uint16_t key, boolean turnON)
+{   
+  //DynamicJsonDocument doc(1024);
+  StaticJsonDocument<512> doc;
   String keyStr = String(key).c_str();
-  //String ledStateStr= ledState ? "OFF" : "ON";
   if (key>=100)
   {
-      doc["state"] = keyState ? "off" : "on";
-      doc["brightness"] = 255;
+    doc["platform"] = "mqtt";
+    doc["schema"] = "template";
+    doc["uniq_id"] = keyStr;
+    for (uint8_t i=0; i<noOfLeds; i++)
+    {
+      if (leds[i].ledNo == key) doc["name"] = leds[i].ledName;  
+    }
+    String slash = "/";
+    doc["cmd_t"] = ledSetTopic + slash + keyStr;
+    doc["stat_t"] = ledStateTopic + slash + keyStr;
+    doc["cmd_on_tpl"] = "{\"state\":\"on\"}";
+    doc["cmd_off_tpl"] = "{\"state\":\"off\"}";
+    doc["stat_tpl"] = "{{ value_json.state }}";
+    doc["qos"] = "1";
+    doc["retain"] = "TRUE";
   }
   else
   {
-      doc["state"] = keyState ? "Held down" : "Pressed";
+//      doc["state"] = keyState ? "held_down" : "pressed";
   }
 
   char topicChar[50] = {"\0"};
-  String topicStr = String(topic).c_str();  
-  topicStr = topicStr + "/" + keyStr;
+  String topicStr = "homeassistant/light/light_" + keyStr +"/config";
   topicStr.toCharArray(topicChar,topicStr.length()+1);
-  char payloadChar[128] = {"\0"};
-  int b =serializeJson(doc, payloadChar);
+  char payloadChar[512] = {"\0"};
+  int b = 0;
+  if (turnON) 
+  {
+    b =serializeJson(doc, payloadChar);
+  }
   Serial.print("bytes = ");
   Serial.println(b,DEC);
   boolean publishResult = mqttClient.publish(topicChar, payloadChar, true);
   if (debugOn)
   {
     Serial.print("Published message: ");
-    //Serial.print(payloadStr);
+    Serial.println(payloadChar);
     Serial.print(" to topic: ");
     Serial.print(topicStr);
     Serial.print(" with the result: ");
@@ -364,7 +420,8 @@ void mqttPublishStateJson(String topic, uint8_t key, uint8_t keyState)
 }
 
 
-//This is going to be executed when MQTT message arrives
+
+
 void callback(char* topic, byte* payload, unsigned int length) 
 {
   Serial.print("Message arrived on topic: ");
@@ -377,7 +434,11 @@ void callback(char* topic, byte* payload, unsigned int length)
     payloadTemp += (char)payload[i];
   }
   Serial.println(".");
-  payloadTemp.toUpperCase();
+  //payloadTemp.toUpperCase();
+  //DynamicJsonDocument doc(1024);
+  StaticJsonDocument<512> doc;
+  deserializeJson(doc, payload);
+
   String topicStr = String(topic);
   String topicPrefixStr = topicStr.substring(0,topicStr.lastIndexOf('/'));
   String topicSuffixStr = topicStr.substring(topicStr.lastIndexOf('/')+1);
@@ -387,33 +448,38 @@ void callback(char* topic, byte* payload, unsigned int length)
 
   uint8_t mqttKey=atoi(String(topicSuffixStr).c_str());
   uint8_t payloadInt = 2;
-  
+  String payloadState = doc["state"];
+  //Serial.println(mqttKey);
+  //Serial.println(payloadState);
+
   if (topicPrefixStr.equals(switchSetTopic))
-  { if (payloadTemp.equals("1")||payloadTemp.equals("ON"))
+  { if (payloadState.equals("0")||payloadState.equals("pressed"))
     {
-    onSwitchPressed(mqttKey, false);
-    Serial.println("Switch pressed by MQTT message");  
+      onSwitchPressed(mqttKey, false);
+      Serial.println("Switch pressed by MQTT message");  
+    }
+    else if (payloadState.equals("1")||payloadState.equals("hold_down"))
+    {
+      onSwitchPressed(mqttKey, true);
+      Serial.println("Switch hold down by MQTT message");  
     }
   }
   else if (topicPrefixStr.equals(ledSetTopic)) 
   {
-    //uint8_t ledState = ioDeviceDigitalReadS(multiIo, mqttKey);
-    if (payloadTemp.equals("1")||payloadTemp.equals("ON")||payloadTemp.equals("on"))
+    if (payloadState.equals("1")||payloadState.equals("ON")||payloadState.equals("on"))
     {
       payloadInt = ON;
       ioDeviceDigitalWrite(multiIo, mqttKey, payloadInt);
       saveLedStatesToEeprom(mqttKey,payloadInt); 
-      //mqttPublishState(ledStateTopic, mqttKey, payloadInt);
-      mqttPublishStateJson(ledStateTopic, mqttKey, payloadInt);
+      mqttPublishState(ledStateTopic, mqttKey, payloadInt);
       Serial.println("Led turned on by MQTT message");
     }
-    else if (payloadTemp.equals("0")||payloadTemp.equals("OFF")||payloadTemp.equals("off"))
+    else if (payloadState.equals("0")||payloadState.equals("OFF")||payloadState.equals("off"))
     {
       payloadInt = OFF;
       ioDeviceDigitalWrite(multiIo, mqttKey, payloadInt);
       saveLedStatesToEeprom(mqttKey,payloadInt);
-      //mqttPublishState(ledStateTopic, mqttKey, payloadInt);
-      mqttPublishStateJson(ledStateTopic, mqttKey, payloadInt);
+      mqttPublishState(ledStateTopic, mqttKey, payloadInt);
       Serial.println("Led turned off by MQTT message");
     }
   }
@@ -422,24 +488,38 @@ void callback(char* topic, byte* payload, unsigned int length)
 
 // When the switch is pressed then this function will be called (both hardware and MQTT switch works).
 void onSwitchPressed(uint8_t key, bool held)
-{ uint8_t ledState = 2;
-  if (key == 2)
+{ if (key<100)
+  {
+  uint8_t ledState = 2;
+  
+  
+  if (key == 2) //EEPROM clear
   {
     clearEeprom();
-  } else if (key == 3) 
-    {
+  } else if (key == 3)   //Turn off all leds
+    /*{
        for(size_t i=0; i<noOfButtons; i++)
           for(int j=1;j<maxNoOfLedsPerButton+1;j++) 
             if (button2leds[i][j] != -1)
             { 
               ioDeviceDigitalWrite(multiIo, button2leds[i][j], OFF);
               saveLedStatesToEeprom(button2leds[i][j],OFF);
-              //mqttPublishState(ledStateTopic, button2leds[i][j], OFF);
-              mqttPublishStateJson(ledStateTopic, button2leds[i][j], OFF);
+              mqttPublishState(ledStateTopic, button2leds[i][j], OFF);
               Serial.print("Led turned off: ");
               Serial.println(button2leds[i][j]);
             }
         Serial.println("All leds off");
+    }*/
+    {
+       for (size_t i=0; i<noOfLeds; i++)
+            { 
+              ioDeviceDigitalWrite(multiIo, leds[i].ledNo, OFF);
+              mqttPublishState(ledStateTopic, leds[i].ledNo, OFF);
+              Serial.print("Led no: ");
+              Serial.print(leds[i].ledNo);
+              Serial.println(" OFF");
+            }
+        ioDeviceSync(multiIo); // force another sync    
     } 
     /*  else if (key == 99) 
     {
@@ -458,7 +538,7 @@ void onSwitchPressed(uint8_t key, bool held)
         Serial.println("Leds sequence done.");
     } 
     */ 
-    else
+    else 
     {
       for(size_t i=0; i<noOfButtons; i++)
       { if(button2leds[i][0]==key)
@@ -475,19 +555,19 @@ void onSwitchPressed(uint8_t key, bool held)
               Serial.println(!ledState);
             }
             saveLedStatesToEeprom(button2leds[i][j],!ledState);
-            //mqttPublishState(ledStateTopic, button2leds[i][j], !ledState);
-            mqttPublishStateJson(ledStateTopic, button2leds[i][j], !ledState);
+            mqttPublishState(ledStateTopic, button2leds[i][j], !ledState);
           }
         }
       }
       ioDeviceSync(multiIo); // force another sync
-      Serial.print("Switch "); 
-      Serial.print(key);
-      Serial.println(held ? " Held down" : " Pressed");
+      //Serial.print("Switch "); 
+      //Serial.print(key);
+      //Serial.println(held ? " Held down" : " Pressed");
       //serialPrintEeprom();
       //mqttPublishState(switchStateTopic, key, held);
-      mqttPublishStateJson(switchStateTopic, key, held);
+      mqttPublishState(switchStateTopic, key, held);
     }
+  }
 }
 
 
@@ -497,9 +577,11 @@ void setup() {
   Wire.begin();
   Serial.begin(9600);
   // Setup MQTT
-    mqttClient.setCallback(callback);
+  mqttClient.setCallback(callback);
+  mqttClient.setBufferSize(512);
+  //Ethernet.init(53);
   Ethernet.begin(mac, ip, myDns);
-  Serial.println(Ethernet.localIP()); //Print Arduino IP adddress
+    Serial.println(Ethernet.localIP()); //Print Arduino IP adddress
   // Connnect to MQTT broker: 5 times every (2 * no of the try) seconds, then Arduino only mode
   boolean mqttConnected = mqttConnect();
   // END Setup MQTT
@@ -546,14 +628,17 @@ void setup() {
   // Define Expanders PINs as OUTPUT
   for (size_t i=0; i<noOfLeds; i++) 
   {
-    ioDevicePinMode(multiIo, leds[i][0], OUTPUT); // Set mode of the PIN number which is stored in table "leds" under address "i" as output
+    ioDevicePinMode(multiIo, leds[i].ledNo, OUTPUT); // Set mode of the PIN number which is stored in table "leds" under address "i" as output
     EEPROM.get(i,currentEEPROMValue); // Read EEPROM value stored under the address "i"; value LOW = -256, HIGH = -255, no value before = -1.
     if (currentEEPROMValue == 0 || currentEEPROMValue == 1 )       // If there is either LOW or HIGH stored - set pin state to previously stored value
     { 
-      leds[i][1] = currentEEPROMValue;
+      leds[i].ledState = currentEEPROMValue;
     }                             
-    ioDeviceDigitalWrite(multiIo, leds[i][0], leds[i][1]);
-    mqttSubscribeToTopic(ledSetTopic, leds[i][0]);
+    ioDeviceDigitalWrite(multiIo, leds[i].ledNo, leds[i].ledState);
+    mqttSubscribeToTopic(ledSetTopic, leds[i].ledNo);
+    mqttSendAutoDiscovery(leds[i].ledNo, leds[i].ledAutoDiscovery);
+    Serial.print("PIN set as output: ");  
+    Serial.println(leds[i].ledNo);
   }
   ioDeviceSync(multiIo); // force another sync
   Serial.println("Setup is done!");
