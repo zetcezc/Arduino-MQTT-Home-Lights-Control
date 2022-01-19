@@ -22,7 +22,7 @@ You can erase EEPROM by pressing swich 2 on Arduino.
 Configuration:
 1. Set up IP address of arduino, DNS, MQTT broker IP
 2. Set up table of lights (called "leds") by entering there every light with it initial state (ON/OFF)
-3. Set up table of buttons and connection of buttons to leds by filling in table buttons2led.
+3. Set up table of buttons and connection between buttons and leds by filling in table button2leds.
    Each row is on button, posision 0 defines button PIN number, positions 1-10 define leds PIN numbers that should be 
    switched by the button
 4. REMARK: Do not use pins: 
@@ -41,15 +41,15 @@ VERSION NOTES:
     - Added clering of retain buffer in setup. Without it - retained messeges have pressed last used button after restart
     - special button "3" now turns off all leds
 
-0.5 - redesigned MQTT protocol instead of all switched using single topis and number as a payload - each switch and led 
+0.5 - redesigned MQTT protocol instead of all switched using single topis and number as a payload - each button and led 
       has its own topic ending with "/nubmer| (".../54");
-      Frot testing - switch 99 (MQTT) turns every led for 1 sec in sequence.
+      Frot testing - button 99 (MQTT) turns every led for 1 sec in sequence.
 
 0.6 - added MQTT control for single leds
 
 0.6.2 - MQTT improvements:
           - bugfixes and code sanity
-          - switch state sent in payload can be "pressed" or "hold down"
+          - button state sent in payload can be "pressed" or "hold down"
           - light state boradcasted in format: "on,255,255-255-255" (on/off + brightness + RGB brightnesses)
           - tested with HA light MQTT component (template) - payload sent as string
           - 
@@ -59,7 +59,8 @@ VERSION NOTES:
 0.6.4 - MQTT improvements
           - autodiscovery of leds
 
-
+0.6.5 - MQTT bugfixes
+          - problem with retaining messages
 */
 
 
@@ -76,8 +77,8 @@ VERSION NOTES:
 // Serial prints only in this mode (under implementation)
 #define debugOn 0
 
-#define switchSetTopic "arduino01/switch/set"
-#define switchStateTopic "arduino01/switch/state"
+#define buttonSetTopic "arduino01/button/set"
+#define buttonStateTopic "arduino01/button/state"
 #define ledSetTopic "arduino01/led/set"
 #define ledStateTopic "arduino01/led/state"
 
@@ -85,7 +86,7 @@ VERSION NOTES:
 #define ON 0
 #define OFF 1
 #define ledsAutoDiscovery 1
-#define switchesAutoDiscovery 1
+#define buttonsAutoDiscovery 1
 
 //Setting up Ethernet shield
 byte mac[] = { 0xDE, 0xAD, 0xBE, 0xEF, 0xFE, 0xAD };
@@ -127,15 +128,15 @@ led leds[] =
     //,{170,OFF,0,"Led 170"},{171,OFF,0,"Led 171"},{172,OFF,0,"Led 172"},{173,OFF,0,"Led 173"},{174,OFF,0,"Led 174"},{175,OFF,0,"Led 175"},{176,OFF,0,"Led 176"},{177,OFF,0,"Led 177"}
   };
 
-//Define number of switches (outputs/LEDs)
+//Define number of buttons (outputs/LEDs)
 size_t noOfLeds = sizeof(leds) / sizeof(leds[0]);
 
 uint8_t currentEEPROMValue=250;
 
-//this is the number of leds that can be mananaged by single switch
+//this is the number of leds that can be mananaged by single button
 #define maxNoOfLedsPerButton 10
 
-/* Define which switches control which leds. First number in a row is a switch PIN number, then come leds PIN numbers.
+/* Define which buttons control which leds. First number in a row is a button PIN number, then come leds PIN numbers.
 Please make sure to add line for EACH ADDED eapander:
   {100,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1},
 where 100 should be replaced by one of expander's pins.
@@ -201,7 +202,7 @@ int16_t  button2leds[][maxNoOfLedsPerButton+1] =
     {66,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1}, //A12
     {67,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1}, //A13
     {68,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1}, //A14
-    //{90,113,-1,-1,-1,-1,-1,-1,-1,-1,-1}, //MQTT virtual switch test
+    //{90,113,-1,-1,-1,-1,-1,-1,-1,-1,-1}, //MQTT virtual button test
     //{99,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1}, //MQTT test - all leds sequence
     {100,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1}, //to make outputs on expander 0x20 work
     {110,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1},  //to make outputs on expander 0x21 work
@@ -329,7 +330,8 @@ void mqttPublishState(String topic, uint16_t key, uint8_t keyState)
   topicStr = topicStr + "/" + keyStr;
   topicStr.toCharArray(topicChar,topicStr.length()+1);
   char payloadChar[512] = {"\0"};
-  int b =serializeJson(doc, payloadChar);
+  //int b = 
+  serializeJson(doc, payloadChar);
   //Serial.print("bytes = ");
   //Serial.println(b,DEC);
   //Serial.print("After serialize ");
@@ -343,6 +345,7 @@ void mqttPublishState(String topic, uint16_t key, uint8_t keyState)
   {
     Serial.print("Published message: ");
     Serial.println(payloadChar);
+
     Serial.print(" to topic: ");
     Serial.print(topicStr);
     Serial.print(" with the result: ");
@@ -389,7 +392,7 @@ void mqttSendAutoDiscovery(uint16_t key, boolean turnON)
     doc["cmd_off_tpl"] = "{\"state\":\"off\"}";
     doc["stat_tpl"] = "{{ value_json.state }}";
     doc["qos"] = "1";
-    doc["retain"] = "TRUE";
+    doc["retain"] = "FALSE";
   }
   else
   {
@@ -403,10 +406,10 @@ void mqttSendAutoDiscovery(uint16_t key, boolean turnON)
   int b = 0;
   if (turnON) 
   {
-    b =serializeJson(doc, payloadChar);
+    b = serializeJson(doc, payloadChar);
   }
-  Serial.print("bytes = ");
-  Serial.println(b,DEC);
+  //Serial.print("bytes = ");
+  //Serial.println(b,DEC);
   boolean publishResult = mqttClient.publish(topicChar, payloadChar, true);
   if (debugOn)
   {
@@ -452,16 +455,16 @@ void callback(char* topic, byte* payload, unsigned int length)
   //Serial.println(mqttKey);
   //Serial.println(payloadState);
 
-  if (topicPrefixStr.equals(switchSetTopic))
+  if (topicPrefixStr.equals(buttonSetTopic))
   { if (payloadState.equals("0")||payloadState.equals("pressed"))
     {
       onSwitchPressed(mqttKey, false);
-      Serial.println("Switch pressed by MQTT message");  
+      Serial.println("Button pressed by MQTT message");  
     }
     else if (payloadState.equals("1")||payloadState.equals("hold_down"))
     {
       onSwitchPressed(mqttKey, true);
-      Serial.println("Switch hold down by MQTT message");  
+      Serial.println("Button hold down by MQTT message");  
     }
   }
   else if (topicPrefixStr.equals(ledSetTopic)) 
@@ -486,7 +489,7 @@ void callback(char* topic, byte* payload, unsigned int length)
 }
 
 
-// When the switch is pressed then this function will be called (both hardware and MQTT switch works).
+// When the button is pressed then this function will be called (both hardware and MQTT button works).
 void onSwitchPressed(uint8_t key, bool held)
 { if (key<100)
   {
@@ -560,12 +563,12 @@ void onSwitchPressed(uint8_t key, bool held)
         }
       }
       ioDeviceSync(multiIo); // force another sync
-      //Serial.print("Switch "); 
+      //Serial.print("Button "); 
       //Serial.print(key);
       //Serial.println(held ? " Held down" : " Pressed");
       //serialPrintEeprom();
-      //mqttPublishState(switchStateTopic, key, held);
-      mqttPublishState(switchStateTopic, key, held);
+      //mqttPublishState(buttonStateTopic, key, held);
+      mqttPublishState(buttonStateTopic, key, held);
     }
   }
 }
@@ -615,14 +618,14 @@ void setup() {
   Serial.print("Number of leds defined:");
   Serial.println(noOfLeds);
  
-  // Define Arduino PINs as INPUT. Initialise pullup switches
+  // Define Arduino PINs as INPUT. Initialise pullup buttons
   switches.initialise(multiIo, true);
   for (size_t i=0; i<noOfButtons; i++)
   {
     switches.addSwitch(button2leds[i][0], onSwitchPressed); 
     ioDevicePinMode(multiIo, button2leds[i][0], INPUT_PULLUP);
     if (mqttConnected && button2leds[i][0]<100)                 //skip expander's fake input switches
-        mqttSubscribeToTopic(switchSetTopic, button2leds[i][0]); 
+        mqttSubscribeToTopic(buttonSetTopic, button2leds[i][0]); 
   }
 
   // Define Expanders PINs as OUTPUT
@@ -637,8 +640,8 @@ void setup() {
     ioDeviceDigitalWrite(multiIo, leds[i].ledNo, leds[i].ledState);
     mqttSubscribeToTopic(ledSetTopic, leds[i].ledNo);
     mqttSendAutoDiscovery(leds[i].ledNo, leds[i].ledAutoDiscovery);
-    Serial.print("PIN set as output: ");  
-    Serial.println(leds[i].ledNo);
+    //Serial.print("PIN set as output: ");  
+    //Serial.println(leds[i].ledNo);
   }
   ioDeviceSync(multiIo); // force another sync
   Serial.println("Setup is done!");
