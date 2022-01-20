@@ -62,7 +62,7 @@ VERSION NOTES:
 0.6.5 - MQTT bugfixes
           - problem with retaining messages
 
-0,6,6 - MQTT improvemets
+0.6.6 - MQTT improvemets
           - buttons auto discovery          
 */
 
@@ -226,6 +226,9 @@ struct button
   char buttonName[20];
 };
 
+
+// Should a button be auto discovered via mqtt - add a row with the number, then "1" and the name
+// change 1 to 0 if you want to remove from auto discovery
 button buttons[] = 
 {
   {2,1,"CLR EEPROM"},
