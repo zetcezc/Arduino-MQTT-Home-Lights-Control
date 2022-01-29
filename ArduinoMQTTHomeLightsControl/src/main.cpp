@@ -1,18 +1,19 @@
 /*
 
-ArduinoHomeLightsControl
-Version 0.6
-Date: 2022-JAN-06
+ArduinoMQTTHomeLightsControl
+Version 0.7
+Date: 2022-JAN-29
 
-This is the program that can be used to control home lights using Arduino Mega + Ethernet shield + PCF8574 pin expanders.
-In addition it uses MQTT communication to send swtich press events to topics and turn on lights by incoming MQTT messeges.
-In my project I ise Arduino Mega pins + 8 x PC8574 epanders defined as input pins which gives me 118 INPUT PINS 
-(54 in Arduino and 64 in expanders, called "buttons" in the sketch) and 8 x PCF8574 epanders to achieve 64 OUTPUT PINS 
-( called "leds" in the sketch). The PINS can be reconfigured according to the need. 
+This is the program that can be used to control home lights using Arduino Mega + Ethernet shield + up to 16 x PCF8574 pin expanders.
+In addition it uses MQTT communication to send button press events to topics and turn on lights by incoming MQTT messeges.
+MQTT can be used to enable autodiscovery of lights and buttons. I used HomeAssintant syntax.
+
+In my project I ise Arduino Mega pins + DIY boars containig 8 x PC8574A epanders, defined as input pins, which gives me 118 available INPUT PINS (54 in Arduino and 64 in expanders, called "buttons" in the sketch) 
+Additionally I use 8 x PCF8574 epanders to achieve 64 OUTPUT PINS (called "leds" in the sketch). This is the maximum number of PCF8574(A) expanders that can be used.
+PINS can be reconfigured according to the need. 
 
 I'm using io-abstraction library to get all pins together.
 https://www.thecoderscorner.com/products/arduino-libraries/io-abstraction/
-
 Check MultiIoAbstraction for more details.
 https://www.thecoderscorner.com/products/arduino-libraries/io-abstraction/arduino-pins-and-io-expanders-same-time/
 Great library - many thanks to TheCodersCorner / Dave Cherry!
@@ -29,7 +30,7 @@ Configuration:
 4. REMARK: Do not use pins: 
     - 0,1, 4,5, 10, 13, 50,51,52,53 if using Ethernet shield 
     - analog IN 20,21 if using I2C expanders (for instance PCF8574)
-    - PIN 2 and 3 are set up as special pins: 2 clears EEPROM, 3 turns off all leds. 
+    - PIN 2,3 and 6 are set up as special pins: 2 clears EEPROM, 3 turns off all leds, 6 does reset (to do). 
     This makes still 54 available PINs of Arduino Mega.
 5. I discovered strange behavior of the set up: if you want to use all the PINS of the PCF8574 Expander as outputs - you 
    have to define one of PIN of each expander both as input and output. It still works then OK as Output. 
