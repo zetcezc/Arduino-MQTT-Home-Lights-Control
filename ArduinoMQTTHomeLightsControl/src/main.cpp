@@ -101,12 +101,13 @@ IPAddress mqttBrokerIp(192, 168, 1, 11); // MQTT broker IP adress
 #define mqttPasswd "aih1xo6oqueazeSa5oojootebo6Baj0aochizeThaighieghahdieBeco7phei7s"
 
 // no of PINS reserved for Arduino; first expander's PIN will start from EXPANDER1 value
-#define EXPANDER1 100
+#define ArduinoPins 160
+#define startLedNo 160
 
 boolean mqttConnected = 0;
 
-// create a multi Io that allocates the first 100 pins to arduino pins
-MultiIoAbstractionRef multiIo = multiIoExpander(EXPANDER1);
+// create a multi Io that allocates the first "#define ArduinoPins" pins to arduino pins
+MultiIoAbstractionRef multiIo = multiIoExpander(ArduinoPins);
 
 EthernetClient ethClient;
 PubSubClient mqttClient(mqttBrokerIp, 1883, ethClient);
@@ -123,14 +124,14 @@ struct led
 //define initial state. Will be used if no EEPROM value found.
 //By default ledAutoDiscovery is set to 0. Change to 1 for leds that shoudl be visible in HomeAssistant.
 led leds[] = 
-  {  {100,OFF,1,"Led 100"},{101,OFF,1,"Led 101"},{102,OFF,1,"Led 102"},{103,OFF,0,"Led 103"},{104,OFF,0,"Led 104"},{105,OFF,0,"Led 105"},{106,OFF,0,"Led 106"},{107,OFF,0,"Led 107"}
-    ,{110,OFF,0,"Led 110"},{111,OFF,0,"Led 111"},{112,OFF,0,"Led 112"},{113,OFF,0,"Led 113"},{114,OFF,0,"Led 114"},{115,OFF,0,"Led 115"},{116,OFF,0,"Led 116"},{117,OFF,0,"Led 117"}
-    ,{120,OFF,0,"Led 120"},{121,OFF,0,"Led 121"},{122,OFF,0,"Led 122"},{123,OFF,0,"Led 123"},{124,OFF,0,"Led 124"},{125,OFF,0,"Led 125"},{126,OFF,0,"Led 126"},{127,OFF,0,"Led 127"}
-    ,{130,OFF,0,"Led 130"},{131,OFF,0,"Led 131"},{132,OFF,0,"Led 132"},{133,OFF,0,"Led 133"},{134,OFF,0,"Led 134"},{135,OFF,0,"Led 135"},{136,OFF,0,"Led 136"},{137,OFF,0,"Led 137"}
-    ,{140,OFF,0,"Led 140"},{141,OFF,0,"Led 141"},{142,OFF,0,"Led 142"},{143,OFF,0,"Led 143"},{144,OFF,0,"Led 144"},{145,OFF,0,"Led 145"},{146,OFF,0,"Led 146"},{147,OFF,0,"Led 147"}
-    ,{150,OFF,0,"Led 150"},{151,OFF,0,"Led 151"},{152,OFF,0,"Led 152"},{153,OFF,0,"Led 153"},{154,OFF,0,"Led 154"},{155,OFF,0,"Led 155"},{156,OFF,0,"Led 156"},{157,OFF,0,"Led 157"}
-    //,{160,OFF,0,"Led 160"},{161,OFF,0,"Led 161"},{162,OFF,0,"Led 162"},{163,OFF,0,"Led 163"},{164,OFF,0,"Led 164"},{165,OFF,0,"Led 165"},{166,OFF,0,"Led 166"},{167,OFF,0,"Led 167"}
-    //,{170,OFF,0,"Led 170"},{171,OFF,0,"Led 171"},{172,OFF,0,"Led 172"},{173,OFF,0,"Led 173"},{174,OFF,0,"Led 174"},{175,OFF,0,"Led 175"},{176,OFF,0,"Led 176"},{177,OFF,0,"Led 177"}
+  {  {startLedNo,OFF,1,"Led 100"},{startLedNo+1,OFF,1,"Led 101"},{startLedNo+2,OFF,1,"Led 102"},{startLedNo+3,OFF,0,"Led 103"},{startLedNo+4,OFF,0,"Led 104"},{startLedNo+5,OFF,0,"Led 105"},{startLedNo+6,OFF,0,"Led 106"},{startLedNo+7,OFF,0,"Led 107"}
+    ,{startLedNo+10,OFF,0,"Led 110"},{startLedNo+11,OFF,0,"Led 111"},{startLedNo+12,OFF,0,"Led 112"},{startLedNo+13,OFF,0,"Led 113"},{startLedNo+14,OFF,0,"Led 114"},{startLedNo+15,OFF,0,"Led 115"},{startLedNo+16,OFF,0,"Led 116"},{startLedNo+17,OFF,0,"Led 117"}
+    ,{startLedNo+20,OFF,0,"Led 120"},{startLedNo+21,OFF,0,"Led 121"},{startLedNo+22,OFF,0,"Led 122"},{startLedNo+23,OFF,0,"Led 123"},{startLedNo+24,OFF,0,"Led 124"},{startLedNo+25,OFF,0,"Led 125"},{startLedNo+26,OFF,0,"Led 126"},{startLedNo+27,OFF,0,"Led 127"}
+    ,{startLedNo+30,OFF,0,"Led 130"},{startLedNo+31,OFF,0,"Led 131"},{startLedNo+32,OFF,0,"Led 132"},{startLedNo+33,OFF,0,"Led 133"},{startLedNo+34,OFF,0,"Led 134"},{startLedNo+35,OFF,0,"Led 135"},{startLedNo+36,OFF,0,"Led 136"},{startLedNo+37,OFF,0,"Led 137"}
+    ,{startLedNo+40,OFF,0,"Led 140"},{startLedNo+41,OFF,0,"Led 141"},{startLedNo+42,OFF,0,"Led 142"},{startLedNo+43,OFF,0,"Led 143"},{startLedNo+44,OFF,0,"Led 144"},{startLedNo+45,OFF,0,"Led 145"},{startLedNo+46,OFF,0,"Led 146"},{startLedNo+47,OFF,0,"Led 147"}
+    ,{startLedNo+50,OFF,0,"Led 150"},{startLedNo+51,OFF,0,"Led 151"},{startLedNo+52,OFF,0,"Led 152"},{startLedNo+53,OFF,0,"Led 153"},{startLedNo+54,OFF,0,"Led 154"},{startLedNo+55,OFF,0,"Led 155"},{startLedNo+56,OFF,0,"Led 156"},{startLedNo+57,OFF,0,"Led 157"}
+    ,{startLedNo+60,OFF,0,"Led 160"},{startLedNo+61,OFF,0,"Led 161"},{startLedNo+62,OFF,0,"Led 162"},{startLedNo+63,OFF,0,"Led 163"},{startLedNo+64,OFF,0,"Led 164"},{startLedNo+65,OFF,0,"Led 165"},{startLedNo+66,OFF,0,"Led 166"},{startLedNo+67,OFF,0,"Led 167"}
+    ,{startLedNo+70,OFF,0,"Led 170"},{startLedNo+71,OFF,0,"Led 171"},{startLedNo+72,OFF,0,"Led 172"},{startLedNo+73,OFF,0,"Led 173"},{startLedNo+74,OFF,0,"Led 174"},{startLedNo+75,OFF,0,"Led 175"},{startLedNo+76,OFF,0,"Led 176"},{startLedNo+77,OFF,0,"Led 177"}
   };
 
 //Define number of buttons (outputs/LEDs)
@@ -192,7 +193,7 @@ int16_t  button2leds[][maxNoOfLedsPerButton+1] =
     {47,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1},
     {48,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1},
     {49,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1},
-    {54,100,101,102,-1,-1,-1,-1,-1,-1,-1}, //A0
+    {54,0,1,2,-1,-1,-1,-1,-1,-1,-1}, //A0
     {55,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1}, //A1
     {56,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1}, //A2
     {57,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1}, //A3
@@ -206,15 +207,15 @@ int16_t  button2leds[][maxNoOfLedsPerButton+1] =
     {65,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1}, //A11
     {66,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1}, //A12
     {67,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1}, //A13
-    {68,113,-1,-1,-1,-1,-1,-1,-1,-1,-1}, //A14
+    {68,13,-1,-1,-1,-1,-1,-1,-1,-1,-1}, //A14
     //{90,113,-1,-1,-1,-1,-1,-1,-1,-1,-1}, //MQTT virtual button test - always get pressed and hod down on startup (led blinks once)
     //{99,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1}, //MQTT test - all leds sequence
-    {100,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1}, //to make outputs on expander 0x20 work
-    {110,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1},  //to make outputs on expander 0x21 work
-    {120,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1}, //to make outputs on expander 0x22 work
-    {130,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1},  //to make outputs on expander 0x23 work
-    {140,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1}, //to make outputs on expander 0x24 work
-    {150,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1}  //to make outputs on expander 0x25 work
+    {160,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1}, //to make outputs on expander 0x20 work
+    {170,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1},  //to make outputs on expander 0x21 work
+    {180,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1}, //to make outputs on expander 0x22 work
+    {190,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1},  //to make outputs on expander 0x23 work
+    {200,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1}, //to make outputs on expander 0x24 work
+    {210,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1}  //to make outputs on expander 0x25 work
   };
 
 //count the number of buttons
@@ -335,7 +336,7 @@ void mqttPublishState(String topic, uint16_t key, uint8_t keyState)
   String keyStr = String(key).c_str();
   //Serial.print("Key in mqqPublish = ");
   //Serial.println(key);
-  if (key>=100)
+  if (key>=startLedNo)
   {   //Serial.println("I'm in if");
       doc["state"] = keyState ? "off" : "on";
       //Serial.print("keyState = ");
@@ -385,7 +386,7 @@ void mqttSendAutoDiscovery(int16_t key, boolean turnON)
   String keyStr = String(key).c_str();
   String topicStr;
   String slash = "/";
-  if (key>=100)
+  if (key>=startLedNo)
   {
     doc["platform"] = "mqtt";
     doc["schema"] = "template";
@@ -510,7 +511,7 @@ void callback(char* topic, byte* payload, unsigned int length)
 
 // When the button is pressed then this function will be called (both hardware and MQTT button works).
 void onSwitchPressed(uint8_t key, bool held)
-{ if (key<100)
+{ if (key<startLedNo)
   {
   uint8_t ledState = 2;
   
@@ -538,17 +539,17 @@ void onSwitchPressed(uint8_t key, bool held)
         { for(int j=1;j<maxNoOfLedsPerButton+1;j++) 
           if (button2leds[i][j] != -1)
           { 
-            ledState = ioDeviceDigitalReadS(multiIo, button2leds[i][j]);
-            ioDeviceDigitalWrite(multiIo, button2leds[i][j], !ledState);
+            ledState = ioDeviceDigitalReadS(multiIo, button2leds[i][j]+startLedNo);
+            ioDeviceDigitalWrite(multiIo, button2leds[i][j]+startLedNo, !ledState);
             if (debugOn)
             { 
               Serial.print("LedState of leds ");
-              Serial.print(button2leds[i][j]);
+              Serial.print(button2leds[i][j]+startLedNo);
               Serial.print(" = ");
               Serial.println(!ledState);
             }
-            saveLedStatesToEeprom(button2leds[i][j],!ledState);
-            if (mqttConnected) mqttPublishState(ledStateTopic, button2leds[i][j], !ledState);
+            saveLedStatesToEeprom(button2leds[i][j]+startLedNo,!ledState);
+            if (mqttConnected) mqttPublishState(ledStateTopic, button2leds[i][j]+startLedNo, !ledState);
             
           }
         }
@@ -615,7 +616,7 @@ void setup() {
   {
     switches.addSwitch(button2leds[i][0], onSwitchPressed); 
     ioDevicePinMode(multiIo, button2leds[i][0], INPUT_PULLUP);
-    if (mqttConnected && button2leds[i][0]<100)                 //skip expander's fake input switches
+    if (mqttConnected && button2leds[i][0]<startLedNo)                 //skip expander's fake input switches
         {
           mqttSubscribeToTopic(buttonSetTopic, button2leds[i][0]); 
         }
