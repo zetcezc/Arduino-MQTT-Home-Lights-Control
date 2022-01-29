@@ -33,6 +33,7 @@ Configuration:
 5. I discovered strange behavior of the set up: if you want to use all the PINS of the PCF8574 Expander as outputs - you 
    have to define one of PIN of each expander both as input and output. It still works then OK as Output. 
    If you know the reason - please let me know.
+6. in the ioAbstraction.h - change #define MAX_ALLOWABLE_DELEGATES from 8 to 16
 
 VERSION NOTES:
 
@@ -63,7 +64,8 @@ VERSION NOTES:
           - problem with retaining messages
 
 0.6.6 - MQTT improvemets
-          - buttons auto discovery          
+          - buttons auto discovery  
+0.6.7 - PCF8574A DIY board added - only 3 exapnders of 8.        
 */
 
 
@@ -78,8 +80,9 @@ VERSION NOTES:
 #include <ArduinoJson.h>
 
 
+
 // Serial prints only in this mode (under implementation)
-#define debugOn 0
+#define debugOn 1
 
 #define buttonSetTopic "arduino01/button/set"
 #define buttonStateTopic "arduino01/button/state"
@@ -101,7 +104,7 @@ IPAddress mqttBrokerIp(192, 168, 1, 11); // MQTT broker IP adress
 #define mqttPasswd "aih1xo6oqueazeSa5oojootebo6Baj0aochizeThaighieghahdieBeco7phei7s"
 
 // no of PINS reserved for Arduino; first expander's PIN will start from EXPANDER1 value
-#define ArduinoPins 160
+#define ArduinoPins 80
 #define startLedNo 160
 
 boolean mqttConnected = 0;
@@ -140,84 +143,128 @@ size_t noOfLeds = sizeof(leds) / sizeof(leds[0]);
 uint8_t currentEEPROMValue=250;
 
 //this is the number of leds that can be mananaged by single button
-#define maxNoOfLedsPerButton 10
+#define maxNoOfLedsPerButton 5
 
 /* Define which buttons control which leds. First number in a row is a button PIN number, then come leds PIN numbers.
 Please make sure to add line for EACH ADDED eapander:
-  {100,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1},
+  {100,vL,vL,vL,vL,vL},
 where 100 should be replaced by one of expander's pins.
 independently you can define this PIN as output.
 Without this trick Outputs on the expander don't work ;)
 */
 
-int16_t  button2leds[][maxNoOfLedsPerButton+1] = 
-  { {2,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1}, //this one clears EEPROM
-    {3,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1}, //this one to turn all off
-    {6,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1},
-    {7,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1},
-    {8,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1},
-    {9,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1},
-    {11,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1},
-    {12,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1},
-    {14,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1},
-    {15,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1},
-    {16,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1},
-    {17,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1},
-    {18,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1},
-    {19,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1},
-    {22,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1},
-    {23,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1},
-    {24,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1},
-    {25,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1},
-    {26,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1},
-    {27,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1},
-    {28,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1},
-    {29,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1},
-    {30,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1},
-    {31,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1},
-    {32,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1},
-    {33,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1},
-    {34,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1},
-    {35,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1},
-    {36,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1},
-    {37,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1},
-    {38,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1},
-    {39,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1},
-    {40,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1},
-    {41,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1},
-    {42,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1},
-    {43,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1},
-    {44,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1},
-    {45,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1},
-    {46,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1},
-    {47,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1},
-    {48,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1},
-    {49,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1},
-    {54,0,1,2,-1,-1,-1,-1,-1,-1,-1}, //A0
-    {55,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1}, //A1
-    {56,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1}, //A2
-    {57,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1}, //A3
-    {58,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1}, //A4
-    {59,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1}, //A5
-    {60,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1}, //A6
-    {61,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1}, //A7
-    {61,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1}, //A8
-    {63,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1}, //A9
-    {64,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1}, //A10
-    {65,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1}, //A11
-    {66,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1}, //A12
-    {67,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1}, //A13
-    {68,13,-1,-1,-1,-1,-1,-1,-1,-1,-1}, //A14
-    //{90,13,-1,-1,-1,-1,-1,-1,-1,-1,-1}, //MQTT virtual button test - always get pressed and hod down on startup (led blinks once)
-    //{99,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1}, //MQTT test - all leds sequence
-    {startLedNo,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1}, //to make outputs on expander 0x20 work
-    {startLedNo+10,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1},  //to make outputs on expander 0x21 work
-    {startLedNo+20,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1}, //to make outputs on expander 0x22 work
-    {startLedNo+30,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1},  //to make outputs on expander 0x23 work
-    {startLedNo+40,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1}, //to make outputs on expander 0x24 work
-    {startLedNo+50,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1},  //to make outputs on expander 0x25 work
-    {startLedNo+60,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1}, //to make outputs on expander 0x25 work
-    {startLedNo+70,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1}  //to make outputs on expander 0x25 work
+// vL - voidLed - number representing no led assigned
+#define vL 255
+
+
+uint8_t  button2leds[][maxNoOfLedsPerButton+1] = 
+  { {2,vL,vL,vL,vL,vL}, //this one clears EEPROM
+    {3,vL,vL,vL,vL,vL}, //this one to turn all off
+    {6,vL,vL,vL,vL,vL},
+    {7,vL,vL,vL,vL,vL},
+    {8,vL,vL,vL,vL,vL},
+    {9,vL,vL,vL,vL,vL},
+    {11,vL,vL,vL,vL,vL},
+    {12,vL,vL,vL,vL,vL},
+    {14,vL,vL,vL,vL,vL},
+    {15,vL,vL,vL,vL,vL},
+    {16,vL,vL,vL,vL,vL},
+    {17,vL,vL,vL,vL,vL},
+    {18,vL,vL,vL,vL,vL},
+    {19,vL,vL,vL,vL,vL},
+    {22,vL,vL,vL,vL,vL},
+    {23,vL,vL,vL,vL,vL},
+    {24,vL,vL,vL,vL,vL},
+    {25,vL,vL,vL,vL,vL},
+    {26,vL,vL,vL,vL,vL},
+    {27,vL,vL,vL,vL,vL},
+    {28,vL,vL,vL,vL,vL},
+    {29,vL,vL,vL,vL,vL},
+    {30,vL,vL,vL,vL,vL},
+    {31,vL,vL,vL,vL,vL},
+    {32,vL,vL,vL,vL,vL},
+    {33,vL,vL,vL,vL,vL},
+    {34,vL,vL,vL,vL,vL},
+    {35,vL,vL,vL,vL,vL},
+    {36,vL,vL,vL,vL,vL},
+    {37,vL,vL,vL,vL,vL},
+    {38,vL,vL,vL,vL,vL},
+    {39,vL,vL,vL,vL,vL},
+    {40,vL,vL,vL,vL,vL},
+    {41,vL,vL,vL,vL,vL},
+    {42,vL,vL,vL,vL,vL},
+    {43,vL,vL,vL,vL,vL},
+    {44,vL,vL,vL,vL,vL},
+    {45,vL,vL,vL,vL,vL},
+    {46,vL,vL,vL,vL,vL},
+    {47,vL,vL,vL,vL,vL},
+    {48,vL,vL,vL,vL,vL},
+    {49,vL,vL,vL,vL,vL},
+    {54,0,1,2,vL,vL}, //A0
+    {55,vL,vL,vL,vL,vL}, //A1
+    {56,vL,vL,vL,vL,vL}, //A2
+    {57,vL,vL,vL,vL,vL}, //A3
+    {58,vL,vL,vL,vL,vL}, //A4
+    {59,vL,vL,vL,vL,vL}, //A5
+    {60,vL,vL,vL,vL,vL}, //A6
+    {61,vL,vL,vL,vL,vL}, //A7
+    {61,vL,vL,vL,vL,vL}, //A8
+    {63,vL,vL,vL,vL,vL}, //A9
+    {64,vL,vL,vL,vL,vL}, //A10
+    {65,vL,vL,vL,vL,vL}, //A11
+    {66,vL,vL,vL,vL,vL}, //A12
+    {67,vL,vL,vL,vL,vL}, //A13
+    {68,13,vL,vL,vL,vL}, //A14
+    {80,1,vL,vL,vL,vL}, //Here starts the expander 0x38
+    {81,1,vL,vL,vL,vL},
+    {82,1,vL,vL,vL,vL},
+    {83,1,vL,vL,vL,vL},
+    {84,1,vL,vL,vL,vL},
+    {85,1,vL,vL,vL,vL},
+    {86,1,vL,vL,vL,vL},
+    {87,1,vL,vL,vL,vL},
+    {90,1,vL,vL,vL,vL}, //Here starts the expander 0x39
+    {91,1,vL,vL,vL,vL},
+    {92,1,vL,vL,vL,vL},
+    {93,1,vL,vL,vL,vL},
+    {94,1,vL,vL,vL,vL},
+    {95,1,vL,vL,vL,vL},
+    {96,1,vL,vL,vL,vL},
+    {97,1,vL,vL,vL,vL},
+    {100,1,vL,vL,vL,vL}, //Here starts the expander 0x3A
+    //{101,1,vL,vL,vL,vL},
+    //{102,1,vL,vL,vL,vL},
+    //{103,1,vL,vL,vL,vL},
+    //{104,1,vL,vL,vL,vL},
+    //{105,1,vL,vL,vL,vL},
+    //{106,1,vL,vL,vL,vL},
+    //{107,1,vL,vL,vL,vL},
+    {110,1,vL,vL,vL,vL}, //Here starts the expander 0x3B
+    {120,1,vL,vL,vL,vL}, //Here starts the expander 0x3C
+    {130,1,vL,vL,vL,vL}, //Here starts the expander 0x3D
+    {140,1,vL,vL,vL,vL}, //Here starts the expander 0x3E
+    {150,1,vL,vL,vL,vL}, //Here starts the expander 0x3F
+    /*
+    {150,1,vL,vL,vL,vL}, //here starts the expander 0x39
+    {151,1,vL,vL,vL,vL},
+    {152,1,vL,vL,vL,vL},
+    {153,1,vL,vL,vL,vL},
+    {154,1,vL,vL,vL,vL},
+    {155,1,vL,vL,vL,vL},
+    {156,1,vL,vL,vL,vL},
+    {157,1,vL,vL,vL,vL},
+    */
+    //{90,13,vL,vL,vL,vL,vL}, //MQTT virtual button test - always get pressed and hod down on startup (led blinks once)
+    //{99,vL,vL,vL,vL,vL}, //MQTT test - all leds sequence
+    //{150,1,vL,vL,vL,vL,vL}, //to make outputs on expander 0x39 work
+    {startLedNo,vL,vL,vL,vL,vL}, //to make outputs on expander 0x20 work
+    {startLedNo+10,vL,vL,vL,vL,vL},  //to make outputs on expander 0x21 work
+    {startLedNo+20,vL,vL,vL,vL,vL}, //to make outputs on expander 0x22 work
+    {startLedNo+30,vL,vL,vL,vL,vL},  //to make outputs on expander 0x23 work
+    {startLedNo+40,vL,vL,vL,vL,vL}, //to make outputs on expander 0x24 work
+    {startLedNo+50,vL,vL,vL,vL,vL},  //to make outputs on expander 0x25 work
+    {startLedNo+60,vL,vL,vL,vL,vL}, //to make outputs on expander 0x25 work
+    {startLedNo+70,vL,vL,vL,vL,vL}  //to make outputs on expander 0x25 work
   };
 
 //count the number of buttons
@@ -237,7 +284,8 @@ button buttons[] =
 {
   {2,1,"CLR EEPROM"},
   {3,1,"All Leds OFF"},
-  {68,1,"Pokój dizenny"}
+  {68,1,"Pokój dizenny"},
+  //{150,1,"DIY expander 150"}
 };
 
 size_t noOfButtons2 = sizeof(buttons) / sizeof(buttons[0]);
@@ -539,7 +587,7 @@ void onSwitchPressed(uint8_t key, bool held)
       for(size_t i=0; i<noOfButtons; i++)
       { if(button2leds[i][0]==key)
         { for(int j=1;j<maxNoOfLedsPerButton+1;j++) 
-          if (button2leds[i][j] != -1)
+          if (button2leds[i][j] != vL)
           { 
             ledState = ioDeviceDigitalReadS(multiIo, button2leds[i][j]+startLedNo);
             ioDeviceDigitalWrite(multiIo, button2leds[i][j]+startLedNo, !ledState);
@@ -582,30 +630,72 @@ void setup() {
   // Connnect to MQTT broker: 5 times every (2 * no of the try) seconds, then Arduino only mode
   mqttConnected = mqttConnect();
   // END Setup MQTT
+  Serial.println(sizeof(button2leds));
+  
+  // Add an 8574A chip that allocates 10 more pins, therefore it goes from startLedNo..startLedNo+9
+  multiIoAddExpander(multiIo, ioFrom8574(0x38), 10);
+  Serial.println("added an expander at pin 80 to 89");
 
-  // Add an 8574 chip that allocates 10 more pins, therefore it goes from 100..109
-  multiIoAddExpander(multiIo, ioFrom8574(0x20), 10);
+  // Add an 8574A chip that allocates 10 more pins, therefore it goes from startLedNo..startLedNo+9
+  multiIoAddExpander(multiIo, ioFrom8574(0x39), 10);
+  Serial.println("added an expander at pin 90 to 99");
+
+  // Add an 8574A chip that allocates 10 more pins, therefore it goes from startLedNo..startLedNo+9
+  multiIoAddExpander(multiIo, ioFrom8574(0x3A), 10);
   Serial.println("added an expander at pin 100 to 109");
 
-  // Add an 8574 chip that allocates 10 more pins, therefore it goes from 110..119
-  multiIoAddExpander(multiIo, ioFrom8574(0x21), 10);
+  // Add an 8574A chip that allocates 10 more pins, therefore it goes from startLedNo..startLedNo+9
+  multiIoAddExpander(multiIo, ioFrom8574(0x3B), 10);
   Serial.println("added an expander at pin 110 to 119");
 
-  // Add an 8574 chip that allocates 10 more pins, therefore it goes from 120..129
-  multiIoAddExpander(multiIo, ioFrom8574(0x22), 10);
+  // Add an 8574A chip that allocates 10 more pins, therefore it goes from startLedNo..startLedNo+9
+  multiIoAddExpander(multiIo, ioFrom8574(0x3C), 10);
   Serial.println("added an expander at pin 120 to 129");
 
-  // Add an 8574 chip that allocates 10 more pins, therefore it goes from 130..139
-  multiIoAddExpander(multiIo, ioFrom8574(0x23), 10);
+  // Add an 8574A chip that allocates 10 more pins, therefore it goes from startLedNo..startLedNo+9
+  multiIoAddExpander(multiIo, ioFrom8574(0x3D), 10);
   Serial.println("added an expander at pin 130 to 139");
 
-  // Add an 8574 chip that allocates 10 more pins, therefore it goes from 140..149
-  multiIoAddExpander(multiIo, ioFrom8574(0x24), 10);
-  Serial.println("added an expander at pin 140 to 149");
+  // Add an 8574A chip that allocates 10 more pins, therefore it goes from startLedNo..startLedNo+9
+  multiIoAddExpander(multiIo, ioFrom8574(0x3E), 10);
+  Serial.println("added an expander at pin 140 to 159");
 
-  // Add an 8574 chip that allocates 10 more pins, therefore it goes from 150..159
-  multiIoAddExpander(multiIo, ioFrom8574(0x25), 10);
+  // Add an 8574A chip that allocates 10 more pins, therefore it goes from startLedNo..startLedNo+9
+  multiIoAddExpander(multiIo, ioFrom8574(0x3F), 10);
   Serial.println("added an expander at pin 150 to 159");
+
+
+  // Add an 8574 chip that allocates 10 more pins, therefore it goes from startLedNo..startLedNo+9
+  multiIoAddExpander(multiIo, ioFrom8574(0x20), 10);
+  Serial.println("added an expander at pin 160 to 169");
+
+  // Add an 8574 chip that allocates 10 more pins, therefore it goes from startLedNo+10..startLedNo+19
+  multiIoAddExpander(multiIo, ioFrom8574(0x21), 10);
+  Serial.println("added an expander at pin 170 to 179");
+
+  // Add an 8574 chip that allocates 10 more pins, therefore it goes from startLedNo+20..startLedNo+29
+  multiIoAddExpander(multiIo, ioFrom8574(0x22), 10);
+  Serial.println("added an expander at pin 180 to 189");
+
+  // Add an 8574 chip that allocates 10 more pins, therefore it goes from startLedNo+30..startLedNo+39
+  multiIoAddExpander(multiIo, ioFrom8574(0x23), 10);
+  Serial.println("added an expander at pin 190 to 199");
+
+  // Add an 8574 chip that allocates 10 more pins, therefore it goes from startLedNo+40..startLedNo+49
+  multiIoAddExpander(multiIo, ioFrom8574(0x24), 10);
+  Serial.println("added an expander at pin 200 to 209");
+
+  // Add an 8574 chip that allocates 10 more pins, therefore it goes from startLedNo+50..startLedNo+59
+  multiIoAddExpander(multiIo, ioFrom8574(0x25), 10);
+  Serial.println("added an expander at pin 210 to 219");
+
+  // Add an 8574 chip that allocates 10 more pins, therefore it goes from startLedNo+60..startLedNo+69
+  //multiIoAddExpander(multiIo, ioFrom8574(0x26), 10);
+  //Serial.println("added an expander at pin 220 to 229");
+
+  // Add an 8574 chip that allocates 10 more pins, therefore it goes from startLedNo+70..startLedNo+79
+  //multiIoAddExpander(multiIo, ioFrom8574(0x27), 10);
+  //Serial.println("added an expander at pin 230 to 239");
 
   // Add more expanders here..
 
