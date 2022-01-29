@@ -69,7 +69,8 @@ VERSION NOTES:
           - buttons auto discovery  
 0.6.7 - PCF8574A DIY board added - only 3 exapnders of 8.        
 0.7.0 - PCF8574A DIY board added
-      - button2leds array stored now in flash memory instead of RAM to enable bigger size        
+      - button2leds array stored now in flash memory instead of RAM to enable bigger size 
+0.7.1 - small code cleanup
 */
 
 
