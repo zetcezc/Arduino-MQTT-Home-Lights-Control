@@ -208,14 +208,16 @@ int16_t  button2leds[][maxNoOfLedsPerButton+1] =
     {66,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1}, //A12
     {67,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1}, //A13
     {68,13,-1,-1,-1,-1,-1,-1,-1,-1,-1}, //A14
-    //{90,113,-1,-1,-1,-1,-1,-1,-1,-1,-1}, //MQTT virtual button test - always get pressed and hod down on startup (led blinks once)
+    //{90,13,-1,-1,-1,-1,-1,-1,-1,-1,-1}, //MQTT virtual button test - always get pressed and hod down on startup (led blinks once)
     //{99,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1}, //MQTT test - all leds sequence
-    {160,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1}, //to make outputs on expander 0x20 work
-    {170,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1},  //to make outputs on expander 0x21 work
-    {180,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1}, //to make outputs on expander 0x22 work
-    {190,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1},  //to make outputs on expander 0x23 work
-    {200,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1}, //to make outputs on expander 0x24 work
-    {210,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1}  //to make outputs on expander 0x25 work
+    {startLedNo,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1}, //to make outputs on expander 0x20 work
+    {startLedNo+10,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1},  //to make outputs on expander 0x21 work
+    {startLedNo+20,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1}, //to make outputs on expander 0x22 work
+    {startLedNo+30,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1},  //to make outputs on expander 0x23 work
+    {startLedNo+40,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1}, //to make outputs on expander 0x24 work
+    {startLedNo+50,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1},  //to make outputs on expander 0x25 work
+    {startLedNo+60,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1}, //to make outputs on expander 0x25 work
+    {startLedNo+70,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1}  //to make outputs on expander 0x25 work
   };
 
 //count the number of buttons
