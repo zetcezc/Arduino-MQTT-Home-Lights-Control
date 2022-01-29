@@ -1,9 +1,8 @@
-# HomeAutomation
+# ArduinoMQTTHomeLightsControl
 
-Projects for my house automation
-1. ArduinoMQTTHomeLightsControl - software
+Project in progress for my house lights automation
 
-This is the program that can be used to control home lights using Arduino Mega + Ethernet shield + up to 16 x PCF8574 pin expanders.
+This is the software that can be used to control home lights using Arduino Mega + Ethernet shield + up to 16 x PCF8574 pin expanders.
 In addition it uses MQTT communication to send button press events to topics and turn on lights by incoming MQTT messeges.
 MQTT can be used to enable autodiscovery of lights and buttons. I used HomeAssistant syntax.
 If network or MQTT broker is not available - Arduino works alone without this functionality, because the buttons to lights translation table is stored in the flash memory.
