@@ -5,7 +5,7 @@ Projects for my house automation
 
 This is the program that can be used to control home lights using Arduino Mega + Ethernet shield + up to 16 x PCF8574 pin expanders.
 In addition it uses MQTT communication to send button press events to topics and turn on lights by incoming MQTT messeges.
-MQTT can be used to enable autodiscovery of lights and buttons. I used HomeAssintant syntax.
+MQTT can be used to enable autodiscovery of lights and buttons. I used HomeAssistant syntax.
 If network or MQTT broker is not available - Arduino works alone without this functionality, because the buttons-?leds translation table is stored in the flash memory.
 
 In my project I ise Arduino Mega pins + DIY boars containig 8 x PC8574A epanders, defined as input pins, which gives me 118 available INPUT PINS (54 in Arduino and 64 in expanders, called "buttons" in the sketch) 
