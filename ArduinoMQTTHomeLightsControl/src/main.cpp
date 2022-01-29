@@ -66,6 +66,8 @@ VERSION NOTES:
 0.6.6 - MQTT improvemets
           - buttons auto discovery  
 0.6.7 - PCF8574A DIY board added - only 3 exapnders of 8.        
+0.7.0 - PCF8574A DIY board added
+      - button2leds array stored now in flash memory instead of RAM to enable bigger size        
 */
 
 
@@ -82,7 +84,7 @@ VERSION NOTES:
 
 
 // Serial prints only in this mode (under implementation)
-#define debugOn 1
+#define debugOn 0
 
 #define buttonSetTopic "arduino01/button/set"
 #define buttonStateTopic "arduino01/button/state"
@@ -156,8 +158,9 @@ Without this trick Outputs on the expander don't work ;)
 // vL - voidLed - number representing no led assigned
 #define vL 255
 
+const PROGMEM uint16_t charSet[] = { 65000, 32796, 16843, 10, 11234};
 
-uint8_t  button2leds[][maxNoOfLedsPerButton+1] = 
+const uint8_t  button2leds[][maxNoOfLedsPerButton+1] PROGMEM = 
   { {2,vL,vL,vL,vL,vL}, //this one clears EEPROM
     {3,vL,vL,vL,vL,vL}, //this one to turn all off
     {6,vL,vL,vL,vL,vL},
@@ -232,31 +235,54 @@ uint8_t  button2leds[][maxNoOfLedsPerButton+1] =
     {96,1,vL,vL,vL,vL},
     {97,1,vL,vL,vL,vL},
     {100,1,vL,vL,vL,vL}, //Here starts the expander 0x3A
-    //{101,1,vL,vL,vL,vL},
-    //{102,1,vL,vL,vL,vL},
-    //{103,1,vL,vL,vL,vL},
-    //{104,1,vL,vL,vL,vL},
-    //{105,1,vL,vL,vL,vL},
-    //{106,1,vL,vL,vL,vL},
-    //{107,1,vL,vL,vL,vL},
+    {101,1,vL,vL,vL,vL},
+    {102,1,vL,vL,vL,vL},
+    {103,1,vL,vL,vL,vL},
+    {104,1,vL,vL,vL,vL},
+    {105,1,vL,vL,vL,vL},
+    {106,1,vL,vL,vL,vL},
+    {107,1,vL,vL,vL,vL},
     {110,1,vL,vL,vL,vL}, //Here starts the expander 0x3B
+    {111,1,vL,vL,vL,vL},
+    {112,1,vL,vL,vL,vL},
+    {113,1,vL,vL,vL,vL},
+    {114,1,vL,vL,vL,vL},
+    {115,1,vL,vL,vL,vL},
+    {116,1,vL,vL,vL,vL},
+    {117,1,vL,vL,vL,vL},
     {120,1,vL,vL,vL,vL}, //Here starts the expander 0x3C
+    {121,1,vL,vL,vL,vL},
+    {122,1,vL,vL,vL,vL},
+    {123,1,vL,vL,vL,vL},
+    {124,1,vL,vL,vL,vL},
+    {125,1,vL,vL,vL,vL},
+    {126,1,vL,vL,vL,vL},
+    {127,1,vL,vL,vL,vL},
     {130,1,vL,vL,vL,vL}, //Here starts the expander 0x3D
+    {131,1,vL,vL,vL,vL},
+    {132,1,vL,vL,vL,vL},
+    {133,1,vL,vL,vL,vL},
+    {134,1,vL,vL,vL,vL},
+    {135,1,vL,vL,vL,vL},
+    {136,1,vL,vL,vL,vL},
+    {137,1,vL,vL,vL,vL},
     {140,1,vL,vL,vL,vL}, //Here starts the expander 0x3E
+    {141,1,vL,vL,vL,vL},
+    {142,1,vL,vL,vL,vL},
+    {143,1,vL,vL,vL,vL},
+    {144,1,vL,vL,vL,vL},
+    {145,1,vL,vL,vL,vL},
+    {146,1,vL,vL,vL,vL},
+    {147,1,vL,vL,vL,vL},
     {150,1,vL,vL,vL,vL}, //Here starts the expander 0x3F
-    /*
-    {150,1,vL,vL,vL,vL}, //here starts the expander 0x39
     {151,1,vL,vL,vL,vL},
     {152,1,vL,vL,vL,vL},
     {153,1,vL,vL,vL,vL},
     {154,1,vL,vL,vL,vL},
-    {155,1,vL,vL,vL,vL},
+    {155,1,vL,vL,vL,vL}, //uwaga - cos go wyzwalało (110)
     {156,1,vL,vL,vL,vL},
     {157,1,vL,vL,vL,vL},
-    */
-    //{90,13,vL,vL,vL,vL,vL}, //MQTT virtual button test - always get pressed and hod down on startup (led blinks once)
     //{99,vL,vL,vL,vL,vL}, //MQTT test - all leds sequence
-    //{150,1,vL,vL,vL,vL,vL}, //to make outputs on expander 0x39 work
     {startLedNo,vL,vL,vL,vL,vL}, //to make outputs on expander 0x20 work
     {startLedNo+10,vL,vL,vL,vL,vL},  //to make outputs on expander 0x21 work
     {startLedNo+20,vL,vL,vL,vL,vL}, //to make outputs on expander 0x22 work
@@ -284,7 +310,7 @@ button buttons[] =
 {
   {2,1,"CLR EEPROM"},
   {3,1,"All Leds OFF"},
-  {68,1,"Pokój dizenny"},
+  {68,1,"Room 1"},
   //{150,1,"DIY expander 150"}
 };
 
@@ -564,8 +590,6 @@ void onSwitchPressed(uint8_t key, bool held)
 { if (key<startLedNo)
   {
   uint8_t ledState = 2;
-  
-  
   if (key == 2) //EEPROM clear
   {
     clearEeprom();
@@ -585,31 +609,30 @@ void onSwitchPressed(uint8_t key, bool held)
     else 
     {
       for(size_t i=0; i<noOfButtons; i++)
-      { if(button2leds[i][0]==key)
+      { if(pgm_read_byte(&(button2leds[i][0]))==key)
         { for(int j=1;j<maxNoOfLedsPerButton+1;j++) 
-          if (button2leds[i][j] != vL)
+          if (pgm_read_byte(&(button2leds[i][j])) != vL)
           { 
-            ledState = ioDeviceDigitalReadS(multiIo, button2leds[i][j]+startLedNo);
-            ioDeviceDigitalWrite(multiIo, button2leds[i][j]+startLedNo, !ledState);
+            ledState = ioDeviceDigitalReadS(multiIo, pgm_read_byte(&(button2leds[i][j]))+startLedNo);
+            ioDeviceDigitalWrite(multiIo, pgm_read_byte(&(button2leds[i][j]))+startLedNo, !ledState);
             if (debugOn)
             { 
-              Serial.print("LedState of leds ");
-              Serial.print(button2leds[i][j]+startLedNo);
+              Serial.print("LedState of led: ");
+              Serial.print(pgm_read_byte(&(button2leds[i][j]))+startLedNo);
               Serial.print(" = ");
               Serial.println(!ledState);
             }
-            saveLedStatesToEeprom(button2leds[i][j]+startLedNo,!ledState);
-            if (mqttConnected) mqttPublishState(ledStateTopic, button2leds[i][j]+startLedNo, !ledState);
+            saveLedStatesToEeprom(pgm_read_byte(&(button2leds[i][j]))+startLedNo,!ledState);
+            if (mqttConnected) mqttPublishState(ledStateTopic, pgm_read_byte(&(button2leds[i][j]))+startLedNo, !ledState);
             
           }
         }
       }
       ioDeviceSync(multiIo); // force another sync
-      //Serial.print("Button "); 
-      //Serial.print(key);
-      //Serial.println(held ? " Held down" : " Pressed");
+      Serial.print("Button "); 
+      Serial.print(key);
+      Serial.println(held ? " Held down" : " Pressed");
       //serialPrintEeprom();
-      //mqttPublishState(buttonStateTopic, key, held);
       if (mqttConnected) mqttPublishState(buttonStateTopic, key, held);
     }
   }
@@ -630,7 +653,7 @@ void setup() {
   // Connnect to MQTT broker: 5 times every (2 * no of the try) seconds, then Arduino only mode
   mqttConnected = mqttConnect();
   // END Setup MQTT
-  Serial.println(sizeof(button2leds));
+  //Serial.println(sizeof(button2leds));
   
   // Add an 8574A chip that allocates 10 more pins, therefore it goes from startLedNo..startLedNo+9
   multiIoAddExpander(multiIo, ioFrom8574(0x38), 10);
@@ -706,11 +729,11 @@ void setup() {
   switches.initialise(multiIo, true);
   for (size_t i=0; i<noOfButtons; i++)
   {
-    switches.addSwitch(button2leds[i][0], onSwitchPressed); 
-    ioDevicePinMode(multiIo, button2leds[i][0], INPUT_PULLUP);
-    if (mqttConnected && button2leds[i][0]<startLedNo)                 //skip expander's fake input switches
+    switches.addSwitch(pgm_read_byte(&(button2leds[i][0])), onSwitchPressed); 
+    ioDevicePinMode(multiIo, pgm_read_byte(&(button2leds[i][0])), INPUT_PULLUP);
+    if (mqttConnected && pgm_read_byte(&(button2leds[i][0]))<startLedNo)                 //skip expander's fake input switches
         {
-          mqttSubscribeToTopic(buttonSetTopic, button2leds[i][0]); 
+          mqttSubscribeToTopic(buttonSetTopic, pgm_read_byte(&(button2leds[i][0]))); 
         }
   }
   // Initialize mqtt auto discovery
