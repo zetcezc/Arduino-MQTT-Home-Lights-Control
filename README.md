@@ -16,7 +16,7 @@ Additionally I use 8 x PCF8574 epanders to achieve 64 OUTPUT PINS (called "leds"
 PINS can be reconfigured according to the need. 
 Outpus PINS are connected to SSR relays to allow switching 230V lights.
 
-I'm using io-abstraction library to get all pins together.
+I used io-abstraction library to get all pins together.
 
 https://www.thecoderscorner.com/products/arduino-libraries/io-abstraction/
 
