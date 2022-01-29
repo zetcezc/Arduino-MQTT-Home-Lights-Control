@@ -1,6 +1,8 @@
 # Arduino (&MQTT) Home Lights Control
 
 Project in progress for my house lights automation
+WARNING: this is a working prototype stage. Use it on your own risk.
+I will update after deploying in my house. Also with used hardware description.
 
 This is the software that can be used to control home lights using Arduino Mega + Ethernet shield + up to 16 x PCF8574 pin expanders.
 In addition it uses MQTT communication to send button press events to topics and turn on lights by incoming MQTT messeges.
