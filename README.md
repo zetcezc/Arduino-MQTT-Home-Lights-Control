@@ -17,7 +17,11 @@ PINS can be reconfigured according to the need.
 Outpus PINS are connected to SSR relays to allow switching 230V lights.
 
 I'm using io-abstraction library to get all pins together.
+
 https://www.thecoderscorner.com/products/arduino-libraries/io-abstraction/
+
 Check MultiIoAbstraction for more details.
+
 https://www.thecoderscorner.com/products/arduino-libraries/io-abstraction/arduino-pins-and-io-expanders-same-time/
+
 Great library - many thanks to TheCodersCorner / Dave Cherry!
