@@ -6,30 +6,31 @@ Date: 2022-JAN-06
 
 This is the program that can be used to control home lights using Arduino Mega + Ethernet shield + PCF8574 pin expanders.
 In addition it uses MQTT communication to send swtich press events to topics and turn on lights by incoming MQTT messeges.
-In my project I ise Arduino Mega pins + 2 x PC8574 epanders defined as input pins which gives me 71 INPUT PINS 
-(55 in Arduino and 16 in expanders, called "buttons" in the sketch) and 6 x PCF8574 epanders to achieve 48 OUTPUT PINS 
-( called "leds" in the sketch). The PINS can be reconfigured according to the need.
+In my project I ise Arduino Mega pins + 8 x PC8574 epanders defined as input pins which gives me 118 INPUT PINS 
+(54 in Arduino and 64 in expanders, called "buttons" in the sketch) and 8 x PCF8574 epanders to achieve 64 OUTPUT PINS 
+( called "leds" in the sketch). The PINS can be reconfigured according to the need. 
 
 I'm using io-abstraction library to get all pins together.
 https://www.thecoderscorner.com/products/arduino-libraries/io-abstraction/
 
 Check MultiIoAbstraction for more details.
 https://www.thecoderscorner.com/products/arduino-libraries/io-abstraction/arduino-pins-and-io-expanders-same-time/
+Great library - many thanks to TheCodersCorner / Dave Cherry!
 
-State of leds is stored in EEPROM, so after the controler reset - the light are back. EEPROM overrides initial states of light.
-You can erase EEPROM by pressing swich 2 on Arduino.
+State of leds is stored in EEPROM, so after the controler reset - the lights are back. EEPROM overrides initial states of light defined in the code.
+You can erase EEPROM by pressing button 2 on Arduino.
 
 Configuration:
 1. Set up IP address of arduino, DNS, MQTT broker IP
 2. Set up table of lights (called "leds") by entering there every light with it initial state (ON/OFF)
 3. Set up table of buttons and connection between buttons and leds by filling in table button2leds.
-   Each row is on button, posision 0 defines button PIN number, positions 1-10 define leds PIN numbers that should be 
+   Each row is on button, posision 0 defines button PIN number, next positions in a row define leds PIN numbers that should be 
    switched by the button
 4. REMARK: Do not use pins: 
     - 0,1, 4,5, 10, 13, 50,51,52,53 if using Ethernet shield 
     - analog IN 20,21 if using I2C expanders (for instance PCF8574)
     - PIN 2 and 3 are set up as special pins: 2 clears EEPROM, 3 turns off all leds. 
-    This makes still 52 available PINs of Arduino Mega.
+    This makes still 54 available PINs of Arduino Mega.
 5. I discovered strange behavior of the set up: if you want to use all the PINS of the PCF8574 Expander as outputs - you 
    have to define one of PIN of each expander both as input and output. It still works then OK as Output. 
    If you know the reason - please let me know.
@@ -163,7 +164,7 @@ const PROGMEM uint16_t charSet[] = { 65000, 32796, 16843, 10, 11234};
 const uint8_t  button2leds[][maxNoOfLedsPerButton+1] PROGMEM = 
   { {2,vL,vL,vL,vL,vL}, //this one clears EEPROM
     {3,vL,vL,vL,vL,vL}, //this one to turn all off
-    {6,vL,vL,vL,vL,vL},
+    {6,vL,vL,vL,vL,vL}, //this one is planned to do reset
     {7,vL,vL,vL,vL,vL},
     {8,vL,vL,vL,vL,vL},
     {9,vL,vL,vL,vL,vL},
@@ -171,6 +172,7 @@ const uint8_t  button2leds[][maxNoOfLedsPerButton+1] PROGMEM =
     {12,vL,vL,vL,vL,vL},
     {14,vL,vL,vL,vL,vL},
     {15,vL,vL,vL,vL,vL},
+    
     {16,vL,vL,vL,vL,vL},
     {17,vL,vL,vL,vL,vL},
     {18,vL,vL,vL,vL,vL},
@@ -181,6 +183,7 @@ const uint8_t  button2leds[][maxNoOfLedsPerButton+1] PROGMEM =
     {25,vL,vL,vL,vL,vL},
     {26,vL,vL,vL,vL,vL},
     {27,vL,vL,vL,vL,vL},
+    
     {28,vL,vL,vL,vL,vL},
     {29,vL,vL,vL,vL,vL},
     {30,vL,vL,vL,vL,vL},
@@ -191,6 +194,7 @@ const uint8_t  button2leds[][maxNoOfLedsPerButton+1] PROGMEM =
     {35,vL,vL,vL,vL,vL},
     {36,vL,vL,vL,vL,vL},
     {37,vL,vL,vL,vL,vL},
+    
     {38,vL,vL,vL,vL,vL},
     {39,vL,vL,vL,vL,vL},
     {40,vL,vL,vL,vL,vL},
@@ -201,6 +205,7 @@ const uint8_t  button2leds[][maxNoOfLedsPerButton+1] PROGMEM =
     {45,vL,vL,vL,vL,vL},
     {46,vL,vL,vL,vL,vL},
     {47,vL,vL,vL,vL,vL},
+    
     {48,vL,vL,vL,vL,vL},
     {49,vL,vL,vL,vL,vL},
     {54,0,1,2,vL,vL}, //A0
@@ -211,6 +216,7 @@ const uint8_t  button2leds[][maxNoOfLedsPerButton+1] PROGMEM =
     {59,vL,vL,vL,vL,vL}, //A5
     {60,vL,vL,vL,vL,vL}, //A6
     {61,vL,vL,vL,vL,vL}, //A7
+    
     {61,vL,vL,vL,vL,vL}, //A8
     {63,vL,vL,vL,vL,vL}, //A9
     {64,vL,vL,vL,vL,vL}, //A10
@@ -221,6 +227,7 @@ const uint8_t  button2leds[][maxNoOfLedsPerButton+1] PROGMEM =
     {80,1,vL,vL,vL,vL}, //Here starts the expander 0x38
     {81,1,vL,vL,vL,vL},
     {82,1,vL,vL,vL,vL},
+    
     {83,1,vL,vL,vL,vL},
     {84,1,vL,vL,vL,vL},
     {85,1,vL,vL,vL,vL},
@@ -231,6 +238,7 @@ const uint8_t  button2leds[][maxNoOfLedsPerButton+1] PROGMEM =
     {92,1,vL,vL,vL,vL},
     {93,1,vL,vL,vL,vL},
     {94,1,vL,vL,vL,vL},
+    
     {95,1,vL,vL,vL,vL},
     {96,1,vL,vL,vL,vL},
     {97,1,vL,vL,vL,vL},
@@ -241,6 +249,7 @@ const uint8_t  button2leds[][maxNoOfLedsPerButton+1] PROGMEM =
     {104,1,vL,vL,vL,vL},
     {105,1,vL,vL,vL,vL},
     {106,1,vL,vL,vL,vL},
+    
     {107,1,vL,vL,vL,vL},
     {110,1,vL,vL,vL,vL}, //Here starts the expander 0x3B
     {111,1,vL,vL,vL,vL},
@@ -251,6 +260,7 @@ const uint8_t  button2leds[][maxNoOfLedsPerButton+1] PROGMEM =
     {116,1,vL,vL,vL,vL},
     {117,1,vL,vL,vL,vL},
     {120,1,vL,vL,vL,vL}, //Here starts the expander 0x3C
+    
     {121,1,vL,vL,vL,vL},
     {122,1,vL,vL,vL,vL},
     {123,1,vL,vL,vL,vL},
@@ -261,6 +271,7 @@ const uint8_t  button2leds[][maxNoOfLedsPerButton+1] PROGMEM =
     {130,1,vL,vL,vL,vL}, //Here starts the expander 0x3D
     {131,1,vL,vL,vL,vL},
     {132,1,vL,vL,vL,vL},
+    
     {133,1,vL,vL,vL,vL},
     {134,1,vL,vL,vL,vL},
     {135,1,vL,vL,vL,vL},
@@ -271,6 +282,7 @@ const uint8_t  button2leds[][maxNoOfLedsPerButton+1] PROGMEM =
     {142,1,vL,vL,vL,vL},
     {143,1,vL,vL,vL,vL},
     {144,1,vL,vL,vL,vL},
+    
     {145,1,vL,vL,vL,vL},
     {146,1,vL,vL,vL,vL},
     {147,1,vL,vL,vL,vL},
@@ -281,8 +293,8 @@ const uint8_t  button2leds[][maxNoOfLedsPerButton+1] PROGMEM =
     {154,1,vL,vL,vL,vL},
     {155,1,vL,vL,vL,vL}, //uwaga - cos go wyzwalało (110)
     {156,1,vL,vL,vL,vL},
+    
     {157,1,vL,vL,vL,vL},
-    //{99,vL,vL,vL,vL,vL}, //MQTT test - all leds sequence
     {startLedNo,vL,vL,vL,vL,vL}, //to make outputs on expander 0x20 work
     {startLedNo+10,vL,vL,vL,vL,vL},  //to make outputs on expander 0x21 work
     {startLedNo+20,vL,vL,vL,vL,vL}, //to make outputs on expander 0x22 work
@@ -291,6 +303,7 @@ const uint8_t  button2leds[][maxNoOfLedsPerButton+1] PROGMEM =
     {startLedNo+50,vL,vL,vL,vL,vL},  //to make outputs on expander 0x25 work
     {startLedNo+60,vL,vL,vL,vL,vL}, //to make outputs on expander 0x25 work
     {startLedNo+70,vL,vL,vL,vL,vL}  //to make outputs on expander 0x25 work
+    
   };
 
 //count the number of buttons
@@ -504,8 +517,7 @@ void mqttSendAutoDiscovery(int16_t key, boolean turnON)
   {
     b = serializeJson(doc, payloadChar);
   }
-  //Serial.print("bytes = ");
-  //Serial.println(b,DEC);
+  
   boolean publishResult = mqttClient.publish(topicChar, payloadChar, true);
   if (debugOn)
   {
@@ -629,10 +641,13 @@ void onSwitchPressed(uint8_t key, bool held)
         }
       }
       ioDeviceSync(multiIo); // force another sync
-      Serial.print("Button "); 
-      Serial.print(key);
-      Serial.println(held ? " Held down" : " Pressed");
-      //serialPrintEeprom();
+      if (debugOn)
+      {
+        Serial.print("Button "); 
+        Serial.print(key);
+        Serial.println(held ? " Held down" : " Pressed");
+        //serialPrintEeprom();
+      }
       if (mqttConnected) mqttPublishState(buttonStateTopic, key, held);
     }
   }
@@ -712,18 +727,11 @@ void setup() {
   multiIoAddExpander(multiIo, ioFrom8574(0x25), 10);
   Serial.println("added an expander at pin 210 to 219");
 
-  // Add an 8574 chip that allocates 10 more pins, therefore it goes from startLedNo+60..startLedNo+69
-  //multiIoAddExpander(multiIo, ioFrom8574(0x26), 10);
-  //Serial.println("added an expander at pin 220 to 229");
-
-  // Add an 8574 chip that allocates 10 more pins, therefore it goes from startLedNo+70..startLedNo+79
-  //multiIoAddExpander(multiIo, ioFrom8574(0x27), 10);
-  //Serial.println("added an expander at pin 230 to 239");
-
-  // Add more expanders here..
-
   Serial.print("Number of leds defined:");
   Serial.println(noOfLeds);
+ 
+  Serial.print("Number of buttons defined:");
+  Serial.println(noOfButtons);
  
   // Define Arduino PINs as INPUT. Initialise pullup buttons
   switches.initialise(multiIo, true);
