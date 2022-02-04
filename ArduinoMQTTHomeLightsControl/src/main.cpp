@@ -118,10 +118,6 @@ boolean mqttConnected = 0;
 // create a multi Io that allocates the first "#define ArduinoPins" pins to arduino pins
 MultiIoAbstractionRef multiIo = multiIoExpander(ArduinoPins);
 
-// create a multi Io that allocates the first "#define ArduinoPins" pins to arduino pins
-//MultiIoAbstractionRef multiIoLeds = multiIoExpander(ArduinoPins);
-
-
 EthernetClient ethClient;
 PubSubClient mqttClient(mqttBrokerIp, 1883, ethClient);
 
@@ -130,24 +126,24 @@ struct led
   uint8_t ledNo;
   boolean ledState;
   boolean ledAutoDiscovery;
-  char ledName[13];
+  char ledName[10];
 };
 
 //initiate table of leds (Expander PINS) - output. Max = 8x8=64 on PCF8574's
 //define initial state. Will be used if no EEPROM value found.
 //By default ledAutoDiscovery is set to 0. Change to 1 for leds that shoudl be visible in HomeAssistant.
 led leds[] = 
-  {  {startLedNo,OFF,1,"Antresola"},{startLedNo+1,OFF,1,"Łaz. prysz."},{startLedNo+2,OFF,1,"Krysia str."},{startLedNo+3,OFF,1,"Krysia R."}
-    ,{startLedNo+4,OFF,1,"Susz. suf."},{startLedNo+5,OFF,1,"Prac. suf."},{startLedNo+6,OFF,1,"Led 06"},{startLedNo+7,OFF,1,"Led 07"}
+  {  {startLedNo,   OFF,1,"Antresola"}, {startLedNo+1, OFF,1,"Laz prysz"}, {startLedNo+2,OFF,1,"Krysia st"},{startLedNo+3,OFF,1,"Krysia R"}
+    ,{startLedNo+4, OFF,1,"Susza suf"}, {startLedNo+5, OFF,1,"Prac suf"}, {startLedNo+6,OFF,1,"Led 06"},   {startLedNo+7,OFF,1,"Led 07"}
     
-    ,{startLedNo+10,OFF,1,"Led 10"},{startLedNo+11,OFF,1,"SypEZ R."},{startLedNo+12,OFF,1,"Led 12"},{startLedNo+13,OFF,1,"SypEZ suf."}
-    ,{startLedNo+14,OFF,1,"Krysia suf."},{startLedNo+15,OFF,1,"Prac. biurka"},{startLedNo+16,OFF,1,"Laz. suf."},{startLedNo+17,OFF,1,"Janek R."}
+    ,{startLedNo+10,OFF,1,"Led 10"},   {startLedNo+11,OFF,1,"SypEZ R"},  {startLedNo+12,OFF,1,"Led 12"},  {startLedNo+13,OFF,1,"SypEZ su"}
+    ,{startLedNo+14,OFF,1,"Krysia su"}, {startLedNo+15,OFF,1,"Prac biur"}, {startLedNo+16,OFF,1,"Laz. suf"},{startLedNo+17,OFF,1,"Janek R"}
     
-    ,{startLedNo+20,OFF,1,"Led 20"},{startLedNo+21,OFF,1,"Led 21"},{startLedNo+22,OFF,1,"Gospod."},{startLedNo+23,OFF,1,"Hall duże"}
-    ,{startLedNo+24,OFF,1,"Jad. kw1"},{startLedNo+25,OFF,1,"Led 25"},{startLedNo+26,OFF,1,"Kuch. suf."},{startLedNo+27,OFF,1,"Led 27"}
+    ,{startLedNo+20,OFF,1,"Led 20"},   {startLedNo+21,OFF,1,"Led 21"},   {startLedNo+22,OFF,1,"Gospod."}, {startLedNo+23,OFF,1,"Hall duze"}
+    ,{startLedNo+24,OFF,1,"Jadal kw1"},  {startLedNo+25,OFF,1,"Led 25"},   {startLedNo+26,OFF,1,"Kuch suf"},{startLedNo+27,OFF,1,"Led 27"}
 
-    ,{startLedNo+30,OFF,1,"Led 30"},{startLedNo+31,OFF,1,"Wejście"},{startLedNo+32,OFF,1,"Led 32"},{startLedNo+33,OFF,1,"Schody"}
-    ,{startLedNo+34,OFF,1,"Salon akw.L"},{startLedNo+35,OFF,1,"Kuch. stół"},{startLedNo+36,OFF,1,"Salon KL2"},{startLedNo+37,OFF,1,"WC prysz."}
+    ,{startLedNo+30,OFF,1,"Led 30"},   {startLedNo+31,OFF,1,"Wejście"},  {startLedNo+32,OFF,1,"Led 32"},  {startLedNo+33,OFF,1,"Schody"}
+    ,{startLedNo+34,OFF,1,"Sal akw L"}, {startLedNo+35,OFF,1,"Kuch stol"}, {startLedNo+36,OFF,1,"Sal KL2"}, {startLedNo+37,OFF,1,"WC prysz"}
     
     //,{startLedNo+40,OFF,1,"Salon suf."},{startLedNo+41,OFF,1,"WC suf."},{startLedNo+42,OFF,1,"Garderoba"},{startLedNo+43,OFF,1,"Led 43"},{startLedNo+44,OFF,1,"Led 44"},{startLedNo+45,OFF,1,"Led 45"},{startLedNo+46,OFF,1,"Led 46"},{startLedNo+47,OFF,1,"Led 47"}
     //,{startLedNo+50,OFF,1,"Salon KL1"},{startLedNo+51,OFF,1,"WC lustro"},{startLedNo+52,OFF,1,"Led 52"},{startLedNo+53,OFF,1,"Salon KP2"},{startLedNo+54,OFF,1,"TV suf."},{startLedNo+55,OFF,1,"Salon KP1"},{startLedNo+56,OFF,1,"Kuch. zlew"},{startLedNo+57,OFF,1,"Jad kw2"}
