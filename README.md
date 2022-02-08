@@ -6,23 +6,27 @@ WARNING: The software is deployed in my house, but I cannot guarntee it's going 
 
 I will update with used hardware description.
 
-This is the software that can be used to control home lights using Arduino Mega + Ethernet shield + up to 12 x PCF8574 pin expanders.
-In addition it uses MQTT communication to send button press events to topics and turn on lights by incoming MQTT messeges.
-MQTT can be used to enable autodiscovery of lights and buttons. I used HomeAssistant syntax.
-If network or MQTT broker is not available - Arduino works alone without this functionality, because the buttons to lights translation table is stored in the flash memory.
+My idea was to design the system which would 
+- work with cabled system (reliable)
+- boot up and work fast
+- be independent from network infrastructure but could benefit it
+- easy to build using ready hardware modules (this I could not achieve completely - but maybe you can if you need less input/output connections
 
-In my project I ise Arduino Mega pins + DIY boars containig 4 x PC8574A epanders, defined as input pins, which gives me 86 available INPUT PINS (54 in Arduino and 32 in expanders, called "buttons" in the sketch) + 3 reserved (clear EEPROM, reset, switch all off).
-Additionally I use 8 x PCF8574 epanders to achieve 64 OUTPUT PINS (called "leds" in the sketch). 
-The maximum number of PCF8574(A) expanders that can be used in this project is 12 (limit of io-abstraction library used). 
+Arduino is the brain which listens to buttons connected to input pins and turns on/off output pins connected to relays, which control lights. In the current version it also stores in flash memory the table with the definition which buttons control which set of lamps. ANd that's it if we talk about basic funtionality. 
+To have more input/output pins - I use PCF8574 and PCF8574A expanders.
+
+In my project I ise Arduino Mega pins (54) + DIY boars containig 4 x PC8574A epanders, defined as input pins (32) which makes 86 available "buttons" + 3 reserved (clear EEPROM, reset, switch all off).
+Additionally I use 8 x PCF8574 epanders to achieve 64 OUTPUT PINS (I call them "leds"). 
+In theory you could combine 8 x PCF8574 + 8 x PCF8574A expanders (limit of the addressing), but the maximum number of PCF8574(A) expanders that can be used in this project is 12 (limit of io-abstraction library used). 
 PINS can be reconfigured according to the need. 
 Outpus PINS are connected to SSR relays and standard relays to allow switching 230V lights.
+And this works fine standalone, but here comes the more interesting part if you want to integrate it with home automation system - MQTT.
+If Arduino succeeds in connecting to MQTT broker - it uses MQTT communication to send button press events to topics and turns on lights by incoming MQTT messeges.
+MQTT can be used to enable autodiscovery of lights and buttons. I used HomeAssistant syntax.
+
 
 I used io-abstraction library to get all pins together.
-
 https://www.thecoderscorner.com/products/arduino-libraries/io-abstraction/
-
 Check MultiIoAbstraction for more details.
-
 https://www.thecoderscorner.com/products/arduino-libraries/io-abstraction/arduino-pins-and-io-expanders-same-time/
-
 Great library - many thanks to TheCodersCorner / Dave Cherry!
