@@ -4,15 +4,14 @@ Project in progress for my house lights automation
 
 WARNING: The software is deployed in my house, but I cannot guarntee it's going work at yours. Use it on your own risk.
 
-I will update with used hardware description.
-
 My idea was to design the system which would 
-- work with cabled system (reliable)
-- boot up and work fast
+- work with wired system (reliable) - I already had cables set up in my house inthe star topology
+- boot up and work fast - my choice was Arduino as the controller
 - be independent from network infrastructure but could benefit it
 - easy to build using ready hardware modules (this I could not achieve completely - but maybe you can if you need less input/output connections
 
-The prerequisite is that every light and every button in your house is connected by cable with one central place. You also have to use wall buttons - not wall switches - they have a spring inside and are closed only as long as you keep them pressed.
+The prerequisite is that every light and every button in your house is connected by cable with one central place. 
+You also have to use wall buttons - not wall switches - they have a spring inside and are closed only as long as you keep them pressed.
 
 Arduino is the brain which listens to buttons connected to input pins and turns on/off output pins connected to relays, which control lights. In the current version it also stores in flash memory the table with the definition which buttons control which set of lamps. And that's it if we talk about basic funtionality. 
 To have more input/output pins - I use PCF8574 and PCF8574A expanders.
