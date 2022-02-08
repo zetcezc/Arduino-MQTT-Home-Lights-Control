@@ -74,6 +74,8 @@ VERSION NOTES:
 0.7.2 - version working with 4 input expanders and 8 output expanders. Added Led names - still to test
 1.0.0 - Bugfixes and minor code improvement
       - tested in production environment
+1.0.1 - Bugfixes and minor code improvement
+      - Light conf adjustment  
 */
 
 
@@ -129,7 +131,7 @@ struct led
   uint8_t ledNo;
   boolean ledState;
   boolean ledAutoDiscovery;
-  char ledName[13];
+  char ledName[14];
 };
 
 //initiate table of leds (Expander PINS) - output. Max = 8x8=64 on PCF8574's
@@ -139,33 +141,33 @@ led leds[] =
   {  {startLedNo,OFF,1,"Antresola"}
     ,{startLedNo+1,OFF,1,"Łaz. prysz."}
     ,{startLedNo+2,OFF,1,"Krysia str."}
-    ,{startLedNo+3,OFF,1,"Krysia R."}
-    ,{startLedNo+4,OFF,1,"Susz. suf."}
-    ,{startLedNo+5,OFF,1,"Prac. suf."}
-    ,{startLedNo+6,OFF,1,"Led 06"}
+    ,{startLedNo+3,OFF,1,"Krysia ref."}
+    ,{startLedNo+4,OFF,1,"Susz. sufit"}
+    ,{startLedNo+5,OFF,1,"Prac. sufit"}
+    ,{startLedNo+6,OFF,1,"Led 06"}                 // tu podlaczyc led lazienka -----------
     ,{startLedNo+7,OFF,1,"Susz. des."}
     
-    ,{startLedNo+10,OFF,1,"Janek S"}
-    ,{startLedNo+11,OFF,1,"SypEZ R."}
-    ,{startLedNo+12,OFF,1,"Lazienka L"}
-    ,{startLedNo+13,OFF,1,"SypEZ suf."}
+    ,{startLedNo+10,OFF,1,"Janek sam."}
+    ,{startLedNo+11,OFF,1,"Syp. EZ ref."}
+    ,{startLedNo+12,OFF,1,"Łaz. lustro"}
+    ,{startLedNo+13,OFF,1,"Syp. EZ suf."}
     ,{startLedNo+14,OFF,1,"Krysia suf."}
     ,{startLedNo+15,OFF,1,"Prac. biurka"}
-    ,{startLedNo+16,OFF,1,"Laz. suf."}
-    ,{startLedNo+17,OFF,1,"Janek R."}
+    ,{startLedNo+16,OFF,1,"Łaz. sufit"}
+    ,{startLedNo+17,OFF,1,"Janek ref."}
     
     ,{startLedNo+20,OFF,1,"Led 20"}
     ,{startLedNo+21,OFF,1,"Led 21"}
-    ,{startLedNo+22,OFF,1,"Gospod."}
+    ,{startLedNo+22,OFF,1,"Gospodarcze"}
     ,{startLedNo+23,OFF,1,"Hall duże"}
-    ,{startLedNo+24,OFF,1,"Jad. kw1"}
+    ,{startLedNo+24,OFF,1,"Jad. kwia.1"}
     ,{startLedNo+25,OFF,1,"Led 25"}
     ,{startLedNo+26,OFF,1,"Kuch. suf."}
     ,{startLedNo+27,OFF,1,"Led 27"}
 
     ,{startLedNo+30,OFF,1,"Led 30"}
     ,{startLedNo+31,OFF,1,"Wejście"}
-    ,{startLedNo+32,OFF,1,"Led 32"}
+    ,{startLedNo+32,OFF,1,"Hall wejście"}
     ,{startLedNo+33,OFF,1,"Schody"}
     ,{startLedNo+34,OFF,1,"Salon akw.L"}
     ,{startLedNo+35,OFF,1,"Kuch. stół"}
@@ -173,31 +175,40 @@ led leds[] =
     ,{startLedNo+37,OFF,1,"WC prysz."}
     
     ,{startLedNo+40,OFF,1,"Salon suf."}
-    ,{startLedNo+41,OFF,1,"WC suf."}
+    ,{startLedNo+41,OFF,1,"WC sufit"}
     ,{startLedNo+42,OFF,1,"Garderoba"}
-    ,{startLedNo+43,OFF,1,"Taras las"}
+    ,{startLedNo+43,OFF,1,"Taras las"}    // zewnętrzne
     ,{startLedNo+44,OFF,1,"Led 44"}
     ,{startLedNo+45,OFF,1,"Taras bok"}
-    ,{startLedNo+46,OFF,1,"Led 46"}
+    ,{startLedNo+46,OFF,1,"Wej.gosp."}
     ,{startLedNo+47,OFF,1,"Led 47"}
     
     ,{startLedNo+50,OFF,1,"Salon KL1"}
     ,{startLedNo+51,OFF,1,"WC lustro"}
-    ,{startLedNo+52,OFF,1,"Led 52"}
+    ,{startLedNo+52,OFF,1,"TV kin.tył"}
     ,{startLedNo+53,OFF,1,"Salon KP2"}
-    ,{startLedNo+54,OFF,1,"TV suf."}
+    ,{startLedNo+54,OFF,1,"TV sufit"}
     ,{startLedNo+55,OFF,1,"Salon KP1"}
     ,{startLedNo+56,OFF,1,"Kuch. zlew"}
-    ,{startLedNo+57,OFF,1,"Jad kw2"}
+    ,{startLedNo+57,OFF,1,"Jad. kwia.2"}
     
-    ,{startLedNo+60,OFF,0,"Kuch.blat"}
+    ,{startLedNo+60,OFF,0,"Kuch. blat"}
     ,{startLedNo+61,OFF,0,"Salon akw.P"}
     ,{startLedNo+62,OFF,0,"Salon buda"}
-    ,{startLedNo+63,OFF,0,"Jad. stol"}
-    ,{startLedNo+64,OFF,0,"TV kin.F"}
+    ,{startLedNo+63,OFF,0,"Jad. stół"}
+    ,{startLedNo+64,OFF,0,"TV kin.przód"}
     ,{startLedNo+65,OFF,0,"Led 65"}
     ,{startLedNo+66,OFF,0,"Led 66"}
     ,{startLedNo+67,OFF,0,"Led 67"}
+    
+    ,{startLedNo+70,OFF,0,"Led 70"}
+    ,{startLedNo+71,OFF,0,"Led 71"}
+    ,{startLedNo+72,OFF,0,"Led 72"}
+    ,{startLedNo+73,OFF,0,"Led 73"}
+    ,{startLedNo+74,OFF,0,"Led 74"}
+    ,{startLedNo+75,OFF,0,"Led 75"}
+    ,{startLedNo+76,OFF,0,"Led 76"}
+    ,{startLedNo+77,OFF,0,"Led 77"}
     
     //,{startLedNo+70,OFF,0,"Led 70"},{startLedNo+71,OFF,0,"Led 71"},{startLedNo+72,OFF,0,"Led 72"},{startLedNo+73,OFF,0,"Led 73"},{startLedNo+74,OFF,0,"Led 74"},{startLedNo+75,OFF,0,"Led 75"},{startLedNo+76,OFF,0,"Led 76"},{startLedNo+77,OFF,0,"Led 77"}
     
@@ -252,21 +263,21 @@ const uint8_t  button2leds[][maxNoOfLedsPerButton+1] PROGMEM =
     {18,64,vL,vL,vL,vL},  //P0 TV 1
     {19,41,vL,vL,vL,vL},  //P0 WC 1
     {22,45,vL,vL,vL,vL},  //P0 Dining N1
-    {23,64,vL,vL,vL,vL},  //P0 TV blinds 2
+    {23,52,vL,vL,vL,vL},  //P0 TV blinds 2
     {24,43,vL,vL,vL,vL},  //P0 Dining N2
     {25,64,vL,vL,vL,vL},  //P0 TV blinds 1
     {26,16,vL,vL,vL,vL},  //P1 Antresola bathroom 1
     {27,23,vL,vL,vL,vL},  //P0 Kitchen 2
     
     {28,13,vL,vL,vL,vL},  //P1 SypEZ 1
-    {29,vL,vL,vL,vL,vL},  //P0 Hall 5
+    {29,vL,vL,vL,vL,vL},  //P0 Hall 5                         
     {30,02,vL,vL,vL,vL},  //P1 Krysia 3 (dupl. strych)
     {31,54,vL,vL,vL,vL},  //P0 TV blinds 3
     {32,54,vL,vL,vL,vL},  //P0 TV blinds 4
     {33,33,vL,vL,vL,vL},  //P0 stairs 1
     {34,36,50,vL,vL,vL},  //P0 Salon 1
     {35,31,vL,vL,vL,vL},  //P0 Hall 1
-    {36,vL,vL,vL,vL,vL},  //P0 Hall 2
+    {36,vL,vL,vL,vL,vL},  //P0 Hall 2                        
     {37,34,61,62,vL,vL},  //P0 Salon 7
     
     {38,40,vL,vL,vL,vL},  //P0 Salon 4
@@ -300,7 +311,7 @@ const uint8_t  button2leds[][maxNoOfLedsPerButton+1] PROGMEM =
     {68,vL,vL,vL,vL,vL}, //A14
     //Here starts the expander 0x38
     {80,0,vL,vL,vL,vL},  //P1 Antresola Janek 2      
-    {81,vL,vL,vL,vL,vL},  //P0 Hall 6
+    {81,vL,vL,vL,vL,vL},  //P0 Hall 6                  
     {82,24,57,vL,vL,vL},  //P0 Dining W3
     {83,60,vL,vL,vL,vL},  //P0 Kitchen 6
     {84,17,vL,vL,vL,vL},  //P1 Janek 2
@@ -311,11 +322,11 @@ const uint8_t  button2leds[][maxNoOfLedsPerButton+1] PROGMEM =
     {100,43,vL,vL,vL,vL},  //P0 Dining W2   
     {101,11,vL,vL,vL,vL},  //P1 SypEZ 2
     {102,vL,vL,vL,vL,vL},  //NN
-    {103,54,vL,vL,vL,vL},  //P0 TV 2
+    {103,52,vL,vL,vL,vL},  //P0 TV 2
     {104,3,vL,vL,vL,vL},   //P1 Krysia 2
     {105,23,vL,vL,vL,vL},  //P0 Hall 4                                 
     {106,24,57,vL,vL,vL},  //P0 Dining N3
-    {107,vL,vL,vL,vL,vL},  //P0 Hall 7
+    {107,25,vL,vL,vL,vL},  //P0 Hall 7
     //Here starts the expander 0x3C
     {120,vL,vL,vL,vL,vL},  //P0 Hall 8 - all off   
     {121,vL,vL,vL,vL,vL},  //NN
@@ -868,6 +879,15 @@ void setup() {
   // Add an 8574 chip that allocates 10 more pins, therefore it goes from startLedNo+50..startLedNo+59
   multiIoAddExpander(multiIo, ioFrom8574(0x25), 10);
   if (debugOn) Serial.println("added an expander at pin 210 to 219");
+
+ // Add an 8574 chip that allocates 10 more pins, therefore it goes from startLedNo+50..startLedNo+59
+  multiIoAddExpander(multiIo, ioFrom8574(0x26), 10);
+  if (debugOn) Serial.println("added an expander at pin 220 to 229");
+
+   // Add an 8574 chip that allocates 10 more pins, therefore it goes from startLedNo+50..startLedNo+59
+  multiIoAddExpander(multiIo, ioFrom8574(0x27), 10);
+  if (debugOn) Serial.println("added an expander at pin 230 to 239");
+
 
   Serial.print("Number of leds defined:");
   Serial.println(noOfLeds);
