@@ -71,7 +71,9 @@ VERSION NOTES:
 0.7.0 - PCF8574A DIY board added
       - button2leds array stored now in flash memory instead of RAM to enable bigger size 
 0.7.1 - small code cleanup
-0.7.2 - version working with 8 input expanders and 4 output expanders. Added Led names.
+0.7.2 - version working with 4 input expanders and 8 output expanders. Added Led names - still to test
+1.0.0 - Bugfixes and minor code improvement
+      - tested in production environment
 */
 
 
@@ -89,6 +91,7 @@ VERSION NOTES:
 
 // Serial prints only in this mode (under implementation)
 #define debugOn 1
+#define mqttDebugOn 0
 
 #define buttonSetTopic "arduino01/button/set"
 #define buttonStateTopic "arduino01/button/state"
@@ -126,43 +129,91 @@ struct led
   uint8_t ledNo;
   boolean ledState;
   boolean ledAutoDiscovery;
-  char ledName[10];
+  char ledName[13];
 };
 
 //initiate table of leds (Expander PINS) - output. Max = 8x8=64 on PCF8574's
 //define initial state. Will be used if no EEPROM value found.
 //By default ledAutoDiscovery is set to 0. Change to 1 for leds that shoudl be visible in HomeAssistant.
 led leds[] = 
-  {  {startLedNo,   OFF,1,"Antresola"}, {startLedNo+1, OFF,1,"Laz prysz"}, {startLedNo+2,OFF,1,"Krysia st"},{startLedNo+3,OFF,1,"Krysia R"}
-    ,{startLedNo+4, OFF,1,"Susza suf"}, {startLedNo+5, OFF,1,"Prac suf"}, {startLedNo+6,OFF,1,"Led 06"},   {startLedNo+7,OFF,1,"Led 07"}
+  {  {startLedNo,OFF,1,"Antresola"}
+    ,{startLedNo+1,OFF,1,"Łaz. prysz."}
+    ,{startLedNo+2,OFF,1,"Krysia str."}
+    ,{startLedNo+3,OFF,1,"Krysia R."}
+    ,{startLedNo+4,OFF,1,"Susz. suf."}
+    ,{startLedNo+5,OFF,1,"Prac. suf."}
+    ,{startLedNo+6,OFF,1,"Led 06"}
+    ,{startLedNo+7,OFF,1,"Susz. des."}
     
-    ,{startLedNo+10,OFF,1,"Led 10"},   {startLedNo+11,OFF,1,"SypEZ R"},  {startLedNo+12,OFF,1,"Led 12"},  {startLedNo+13,OFF,1,"SypEZ su"}
-    ,{startLedNo+14,OFF,1,"Krysia su"}, {startLedNo+15,OFF,1,"Prac biur"}, {startLedNo+16,OFF,1,"Laz. suf"},{startLedNo+17,OFF,1,"Janek R"}
+    ,{startLedNo+10,OFF,1,"Janek S"}
+    ,{startLedNo+11,OFF,1,"SypEZ R."}
+    ,{startLedNo+12,OFF,1,"Lazienka L"}
+    ,{startLedNo+13,OFF,1,"SypEZ suf."}
+    ,{startLedNo+14,OFF,1,"Krysia suf."}
+    ,{startLedNo+15,OFF,1,"Prac. biurka"}
+    ,{startLedNo+16,OFF,1,"Laz. suf."}
+    ,{startLedNo+17,OFF,1,"Janek R."}
     
-    ,{startLedNo+20,OFF,1,"Led 20"},   {startLedNo+21,OFF,1,"Led 21"},   {startLedNo+22,OFF,1,"Gospod."}, {startLedNo+23,OFF,1,"Hall duze"}
-    ,{startLedNo+24,OFF,1,"Jadal kw1"},  {startLedNo+25,OFF,1,"Led 25"},   {startLedNo+26,OFF,1,"Kuch suf"},{startLedNo+27,OFF,1,"Led 27"}
+    ,{startLedNo+20,OFF,1,"Led 20"}
+    ,{startLedNo+21,OFF,1,"Led 21"}
+    ,{startLedNo+22,OFF,1,"Gospod."}
+    ,{startLedNo+23,OFF,1,"Hall duże"}
+    ,{startLedNo+24,OFF,1,"Jad. kw1"}
+    ,{startLedNo+25,OFF,1,"Led 25"}
+    ,{startLedNo+26,OFF,1,"Kuch. suf."}
+    ,{startLedNo+27,OFF,1,"Led 27"}
 
-    ,{startLedNo+30,OFF,1,"Led 30"},   {startLedNo+31,OFF,1,"Wejście"},  {startLedNo+32,OFF,1,"Led 32"},  {startLedNo+33,OFF,1,"Schody"}
-    ,{startLedNo+34,OFF,1,"Sal akw L"}, {startLedNo+35,OFF,1,"Kuch stol"}, {startLedNo+36,OFF,1,"Sal KL2"}, {startLedNo+37,OFF,1,"WC prysz"}
+    ,{startLedNo+30,OFF,1,"Led 30"}
+    ,{startLedNo+31,OFF,1,"Wejście"}
+    ,{startLedNo+32,OFF,1,"Led 32"}
+    ,{startLedNo+33,OFF,1,"Schody"}
+    ,{startLedNo+34,OFF,1,"Salon akw.L"}
+    ,{startLedNo+35,OFF,1,"Kuch. stół"}
+    ,{startLedNo+36,OFF,1,"Salon KL2"}
+    ,{startLedNo+37,OFF,1,"WC prysz."}
     
-    //,{startLedNo+40,OFF,1,"Salon suf."},{startLedNo+41,OFF,1,"WC suf."},{startLedNo+42,OFF,1,"Garderoba"},{startLedNo+43,OFF,1,"Led 43"},{startLedNo+44,OFF,1,"Led 44"},{startLedNo+45,OFF,1,"Led 45"},{startLedNo+46,OFF,1,"Led 46"},{startLedNo+47,OFF,1,"Led 47"}
-    //,{startLedNo+50,OFF,1,"Salon KL1"},{startLedNo+51,OFF,1,"WC lustro"},{startLedNo+52,OFF,1,"Led 52"},{startLedNo+53,OFF,1,"Salon KP2"},{startLedNo+54,OFF,1,"TV suf."},{startLedNo+55,OFF,1,"Salon KP1"},{startLedNo+56,OFF,1,"Kuch. zlew"},{startLedNo+57,OFF,1,"Jad kw2"}
-    //,{startLedNo+60,OFF,0,"Led 60"},{startLedNo+61,OFF,0,"Led 61"},{startLedNo+62,OFF,0,"Led 62"},{startLedNo+63,OFF,0,"Led 63"},{startLedNo+64,OFF,0,"Led 64"},{startLedNo+65,OFF,0,"Led 65"},{startLedNo+66,OFF,0,"Led 66"},{startLedNo+67,OFF,0,"Led 67"}
+    ,{startLedNo+40,OFF,1,"Salon suf."}
+    ,{startLedNo+41,OFF,1,"WC suf."}
+    ,{startLedNo+42,OFF,1,"Garderoba"}
+    ,{startLedNo+43,OFF,1,"Taras las"}
+    ,{startLedNo+44,OFF,1,"Led 44"}
+    ,{startLedNo+45,OFF,1,"Taras bok"}
+    ,{startLedNo+46,OFF,1,"Led 46"}
+    ,{startLedNo+47,OFF,1,"Led 47"}
+    
+    ,{startLedNo+50,OFF,1,"Salon KL1"}
+    ,{startLedNo+51,OFF,1,"WC lustro"}
+    ,{startLedNo+52,OFF,1,"Led 52"}
+    ,{startLedNo+53,OFF,1,"Salon KP2"}
+    ,{startLedNo+54,OFF,1,"TV suf."}
+    ,{startLedNo+55,OFF,1,"Salon KP1"}
+    ,{startLedNo+56,OFF,1,"Kuch. zlew"}
+    ,{startLedNo+57,OFF,1,"Jad kw2"}
+    
+    ,{startLedNo+60,OFF,0,"Kuch.blat"}
+    ,{startLedNo+61,OFF,0,"Salon akw.P"}
+    ,{startLedNo+62,OFF,0,"Salon buda"}
+    ,{startLedNo+63,OFF,0,"Jad. stol"}
+    ,{startLedNo+64,OFF,0,"TV kin.F"}
+    ,{startLedNo+65,OFF,0,"Led 65"}
+    ,{startLedNo+66,OFF,0,"Led 66"}
+    ,{startLedNo+67,OFF,0,"Led 67"}
+    
     //,{startLedNo+70,OFF,0,"Led 70"},{startLedNo+71,OFF,0,"Led 71"},{startLedNo+72,OFF,0,"Led 72"},{startLedNo+73,OFF,0,"Led 73"},{startLedNo+74,OFF,0,"Led 74"},{startLedNo+75,OFF,0,"Led 75"},{startLedNo+76,OFF,0,"Led 76"},{startLedNo+77,OFF,0,"Led 77"}
-    /* brakuje: 
-          Parter: 
-            TV kinkiety przód
-            i tył, 
-            Salon akw.P., 
-            Kinkiet buda, 
-            Jadalnia, 
-            kuchnia nad blatem, 
-          Piętro: 
-            Janek smolot,
-            suszarnia kinkiet
-
-
-    */
+    
+    // brakuje: 
+    //     Parter: 
+    //        TV kinkiety tył, 
+    //        Hall małe
+    //        Zewn  wejście gospodarcze.
+    
+    
+    
+    
+    
+    
+    
+    
   };
 
 //Define number of buttons (outputs/LEDs)
@@ -184,144 +235,107 @@ Without this trick Outputs on the expander don't work ;)
 // vL - voidLed - number representing no led assigned
 #define vL 255
 
-//const PROGMEM uint16_t charSet[] = { 65000, 32796, 16843, 10, 11234};
-
 const uint8_t  button2leds[][maxNoOfLedsPerButton+1] PROGMEM = 
   { {2,vL,vL,vL,vL,vL}, //this one clears EEPROM
     {3,vL,vL,vL,vL,vL}, //this one to turn all off
     {6,vL,vL,vL,vL,vL}, //this one is planned to do reset
     {7,vL,vL,vL,vL,vL},  //P0 Kitchen 1
-    {8,1,vL,vL,vL,vL},  //P1 Office room 1
-    {9,vL,vL,vL,vL,vL},  //P0 TV 4
-    {11,vL,vL,vL,vL,vL},  //P0 TV 3
-    {12,10,vL,vL,vL,vL},  //P1 Office room 2
-    {14,vL,vL,vL,vL,vL},  //P0 Kitchen 3
-    {15,vL,vL,vL,vL,vL},  //P0 Kitchen 4
+    {8,5,vL,vL,vL,vL},   //P1 Office room 1
+    {9,54,vL,vL,vL,vL},  //P0 TV 4
+    {11,54,vL,vL,vL,vL},  //P0 TV 3
+    {12,15,vL,vL,vL,vL},  //P1 Office room 2
+    {14,26,vL,vL,vL,vL},  //P0 Kitchen 3
+    {15,35,vL,vL,vL,vL},  //P0 Kitchen 4
     
-    {16,vL,vL,vL,vL,vL},  //P0 WC2
-    {17,vL,vL,vL,vL,vL},  //P0 Salon 3
-    {18,vL,vL,vL,vL,vL},  //P0 TV 1
-    {19,vL,vL,vL,vL,vL},  //P0 WC 1
-    {22,0,vL,vL,vL,vL},  //P0 Dining N1
-    {23,vL,vL,vL,vL,vL},  //P0 TV blinds 2
-    {24,vL,vL,vL,vL,vL},  //P0 Dining N2
-    {25,vL,vL,vL,vL,vL},  //P0 TV blinds 1
-    {26,vL,vL,vL,vL,vL},
-    {27,vL,vL,vL,vL,vL},  //P0 Kitchen 2
+    {16,51,vL,vL,vL,vL},  //P0 WC2
+    {17,40,vL,vL,vL,vL},  //P0 Salon 3
+    {18,64,vL,vL,vL,vL},  //P0 TV 1
+    {19,41,vL,vL,vL,vL},  //P0 WC 1
+    {22,45,vL,vL,vL,vL},  //P0 Dining N1
+    {23,64,vL,vL,vL,vL},  //P0 TV blinds 2
+    {24,43,vL,vL,vL,vL},  //P0 Dining N2
+    {25,64,vL,vL,vL,vL},  //P0 TV blinds 1
+    {26,16,vL,vL,vL,vL},  //P1 Antresola bathroom 1
+    {27,23,vL,vL,vL,vL},  //P0 Kitchen 2
     
-    {28,vL,vL,vL,vL,vL},
-    {29,vL,vL,vL,vL,vL},
-    {30,vL,vL,vL,vL,vL},
-    {31,vL,vL,vL,vL,vL},  //P0 TV blinds 3
-    {32,vL,vL,vL,vL,vL},  //P0 TV blinds 4
-    {33,vL,vL,vL,vL,vL},
-    {34,vL,vL,vL,vL,vL},  //P0 Salon 1
-    {35,vL,vL,vL,vL,vL},  //P0 Hall 1
+    {28,13,vL,vL,vL,vL},  //P1 SypEZ 1
+    {29,vL,vL,vL,vL,vL},  //P0 Hall 5
+    {30,02,vL,vL,vL,vL},  //P1 Krysia 3 (dupl. strych)
+    {31,54,vL,vL,vL,vL},  //P0 TV blinds 3
+    {32,54,vL,vL,vL,vL},  //P0 TV blinds 4
+    {33,33,vL,vL,vL,vL},  //P0 stairs 1
+    {34,36,50,vL,vL,vL},  //P0 Salon 1
+    {35,31,vL,vL,vL,vL},  //P0 Hall 1
     {36,vL,vL,vL,vL,vL},  //P0 Hall 2
-    {37,vL,vL,vL,vL,vL},  //P0 Salon 7
+    {37,34,61,62,vL,vL},  //P0 Salon 7
     
-    {38,vL,vL,vL,vL,vL},  //P0 Salon 4
-    {39,21,31,vL,vL,vL},  //P0 gosp drzwi 1
-    {40,vL,vL,vL,vL,vL},
-    {41,vL,vL,vL,vL,vL},
-    {42,vL,vL,vL,vL,vL},  //P0 Dining N5
-    {43,vL,vL,vL,vL,vL},
-    {44,vL,vL,vL,vL,vL},  //P1 Antresola SypEZ2
-    {45,vL,vL,vL,vL,vL},  //P0 Stairs down 1
-    {46,vL,vL,vL,vL,vL},  //P0 Dining N4
-    {47,0,10,vL,vL,vL},  //P1 gosp door 2
+    {38,40,vL,vL,vL,vL},  //P0 Salon 4
+    {39,vL,vL,vL,vL,vL},  //P0 gosp drzwi 1
+    {40,51,vL,vL,vL,vL},  //P0 WC mirror 
+    {41,34,61,62,vL,vL},  //P0 Dining N6
+    {42,40,vL,vL,vL,vL},  //P0 Dining N5
+    {43,42,vL,vL,vL,vL},  //P0 Wardrobe 2
+    {44,vL,vL,vL,vL,vL},  //P0 Hall 3 
+    {45,0,vL,vL,vL,vL},   //P1 Antresola SypEZ 2                        
+    {46,63,vL,vL,vL,vL},  //P0 Dining N4
+    {47,22,vL,vL,vL,vL},   //P1 gosp door 2
     
-    {48,vL,vL,vL,vL,vL},
-    {49,vL,vL,vL,vL,vL},
-    {54,vL,vL,vL,vL,vL}, //A0
+    {48,40,vL,vL,vL,vL},        //P1 Antresola Janek 4  
+    {49,vL,vL,vL,vL,vL},        //P1 Krysia 4
+    {54,53,55,vL,vL,vL}, //A0   //P0 Salon 2
     {55,vL,vL,vL,vL,vL}, //A1
-    {56,vL,vL,vL,vL,vL}, //A2
+    {56,37,vL,vL,vL,vL}, //A2   //P0 WC shower
     {57,vL,vL,vL,vL,vL}, //A3
     {58,vL,vL,vL,vL,vL}, //A4
     {59,vL,vL,vL,vL,vL}, //A5
     {60,vL,vL,vL,vL,vL}, //A6
     {61,vL,vL,vL,vL,vL}, //A7
     
-    {61,vL,vL,vL,vL,vL}, //A8
+    {62,vL,vL,vL,vL,vL}, //A8
     {63,vL,vL,vL,vL,vL}, //A9
     {64,vL,vL,vL,vL,vL}, //A10
     {65,vL,vL,vL,vL,vL}, //A11
     {66,vL,vL,vL,vL,vL}, //A12
     {67,vL,vL,vL,vL,vL}, //A13
     {68,vL,vL,vL,vL,vL}, //A14
-    
-    {80,vL,vL,vL,vL,vL}, //Here starts the expander 0x38
+    //Here starts the expander 0x38
+    {80,0,vL,vL,vL,vL},  //P1 Antresola Janek 2      
     {81,vL,vL,vL,vL,vL},  //P0 Hall 6
-    {82,vL,vL,vL,vL,vL},  //P0 Dining W3
-    {83,vL,vL,vL,vL,vL},  //P0 Kitchen 6
-    {84,vL,vL,vL,vL,vL},  //P1 Janek 2
-    {85,vL,vL,vL,vL,vL},  //P0 Dining W4
-    {86,vL,vL,vL,vL,vL},  //P1 Janek 1
-    {87,vL,vL,vL,vL,vL},  //P0 Stairs down 2
-    
-    {90,vL,vL,vL,vL,vL},  //P0 Hall 5  //Here starts the expander 0x39
-    {91,vL,vL,vL,vL,vL},  //P1 Antresola SypEZ 2
-    {92,vL,vL,vL,vL,vL},  //HW Failure
-    {93,vL,vL,vL,vL,vL},  //HW Failure
-    {94,vL,vL,vL,vL,vL},  //P0 Wardrobe 2
-    {95,vL,vL,vL,vL,vL},  //P0 WC mirror
-    {96,vL,vL,vL,vL,vL},
-    {97,vL,vL,vL,vL,vL},
-    
-    {100,vL,vL,vL,vL,vL},  //Here starts the expander 0x3A
-    {101,vL,vL,vL,vL,vL},  //P1 SypEZ2
-    {102,vL,vL,vL,vL,vL},
-    {103,vL,vL,vL,vL,vL},  //P0 TV 2
-    {104,vL,vL,vL,vL,vL},  //P1 Krysia 2
-    {105,vL,vL,vL,vL,vL},  //P0 Hall 4
-    {106,vL,vL,vL,vL,vL},  //P0 Dining N3
-    {107,vL,vL,vL,vL,vL},
-    
-    {110,vL,vL,vL,vL,vL},  //HW Failure //Here starts the expander 0x3B
-    {111,vL,vL,vL,vL,vL},  //HW failure
-    {112,vL,vL,vL,vL,vL},  //P0 Dining W1
-    {113,vL,vL,vL,vL,vL},  //P1 SypEZ 1
-    {114,vL,vL,vL,vL,vL},  //P0 Dining W2
-    {115,vL,vL,vL,vL,vL},  //P0 Dining N6
-    {116,vL,vL,vL,vL,vL},
-    {117,vL,vL,vL,vL,vL},
-    
-    {120,vL,vL,vL,vL,vL},  //P0 Hall 8    //Here starts the expander 0x3C
-    {121,vL,vL,vL,vL,vL},
-    {122,vL,vL,vL,vL,vL},  //P1 Antresola Janek 1
-    {123,vL,vL,vL,vL,vL},
-    {124,vL,vL,vL,vL,vL},  //P1 Antresola bathroom 2
-    {125,vL,vL,vL,vL,vL},  //P0 gosp 2
-    {126,vL,vL,vL,vL,vL},  //P1 Washroom 2
-    {127,vL,vL,vL,vL,vL},
-    
-    {130,vL,vL,vL,vL,vL},  //Here starts the expander 0x3D
-    {131,vL,vL,vL,vL,vL},  //Hw failure
-    {132,vL,vL,vL,vL,vL},
-    {133,vL,vL,vL,vL,vL},  //P1 Antresola Janek 2
-    {134,vL,vL,vL,vL,vL},  //P1 Antresola bathroom 1
-    {135,vL,vL,vL,vL,vL},  //P1 Washroom 1
-    {136,vL,vL,vL,vL,vL},
-    {137,vL,vL,vL,vL,vL},  //HW failure
-    
-    {140,vL,vL,vL,vL,vL},  //P1 Krysia 1   //Here starts the expander 0x3E
-    {141,vL,vL,vL,vL,vL},  //P0 Wardrobe 2
-    {142,vL,vL,vL,vL,vL},
-    {143,vL,vL,vL,vL,vL},  //P1 bathroom 1
-    {144,vL,vL,vL,vL,vL},  //P0 gosp 1
-    {145,vL,vL,vL,vL,vL},
-    {146,vL,vL,vL,vL,vL},  //P1 Antresola Janek 3
-    {147,vL,vL,vL,vL,vL},  //P1 bathroom 2
-    
-    {150,vL,vL,vL,vL,vL},  //P1 Antresola Janek 4  //Here starts the expander 0x3F
-    {151,vL,vL,vL,vL,vL},  //P0 Hall 7
-    {152,vL,vL,vL,vL,vL},  //P0 WC mirror1
-    {153,vL,vL,vL,vL,vL},
-    {154,vL,vL,vL,vL,vL}, //P1 Krysia 4
-    {155,vL,vL,vL,vL,vL}, //HW failure
-    {156,vL,vL,vL,vL,vL},  //P1 Krysia 3
-    {157,vL,vL,vL,vL,vL},
-
+    {82,24,57,vL,vL,vL},  //P0 Dining W3
+    {83,60,vL,vL,vL,vL},  //P0 Kitchen 6
+    {84,17,vL,vL,vL,vL},  //P1 Janek 2
+    {85,63,vL,vL,vL,vL},  //P0 Dining W4
+    {86,10,vL,vL,vL,vL},  //P1 Janek 1
+    {87,0,vL,vL,vL,vL},  //P0 Stairs down 2
+    //Here starts the expander 0x3A
+    {100,43,vL,vL,vL,vL},  //P0 Dining W2   
+    {101,11,vL,vL,vL,vL},  //P1 SypEZ 2
+    {102,vL,vL,vL,vL,vL},  //NN
+    {103,54,vL,vL,vL,vL},  //P0 TV 2
+    {104,3,vL,vL,vL,vL},   //P1 Krysia 2
+    {105,23,vL,vL,vL,vL},  //P0 Hall 4                                 
+    {106,24,57,vL,vL,vL},  //P0 Dining N3
+    {107,vL,vL,vL,vL,vL},  //P0 Hall 7
+    //Here starts the expander 0x3C
+    {120,vL,vL,vL,vL,vL},  //P0 Hall 8 - all off   
+    {121,vL,vL,vL,vL,vL},  //NN
+    {122,33,vL,vL,vL,vL},  //P1 Antresola Janek 1
+    {123,45,vL,vL,vL,vL},  //P0 Dining W1  
+    {124,vL,vL,vL,vL,vL},  //P1 Antresola bathroom 2   -  ledy nocne
+    {125,22,vL,vL,vL,vL},  //P0 gosp 2                                 
+    {126,4,vL,vL,vL,vL},  //P1 Washroom 2
+    {127,vL,vL,vL,vL,vL},  //NC - no cable
+    //Here starts the expander 0x3E
+    {140,14,vL,vL,vL,vL},  //P1 Krysia 1   
+    {141,42,vL,vL,vL,vL},  //P0 Wardrobe 1
+    {142,56,vL,vL,vL,vL},  //P0 Kitchen 5
+    {143,12,vL,vL,vL,vL},   //P1 bathroom 1
+    {144,42,vL,vL,vL,vL},  //P0 gosp 1                                  
+    {145,7,vL,vL,vL,vL},  //P1 Washroom 1
+    {146,40,vL,vL,vL,vL},  //P1 Antresola Janek 3
+    {147,1,vL,vL,vL,vL},  //P1 bathroom 2
+    //Fake INPUT pins which are going to be redefined to OUTPUTS in the next step. 
+    //Without this trick - ioAbstraction expanders don't work (at least at my place)
     {startLedNo,vL,vL,vL,vL,vL}, //to make outputs on expander 0x20 work
     {startLedNo+10,vL,vL,vL,vL,vL},  //to make outputs on expander 0x21 work
     {startLedNo+20,vL,vL,vL,vL,vL}, //to make outputs on expander 0x22 work
@@ -528,14 +542,14 @@ int8_t mqttSubscribeToTopic(String topic, uint16_t key)
   topicStr = topicStr + "/" + keyStr;
   topicStr.toCharArray(topicChar,topicStr.length()+1);
   int8_t subscribeResult = mqttClient.subscribe(topicChar);
-/*  if (debugOn)
+  #if mqttDebugOn
   {
     Serial.print("Subscribed to topic: ");
     Serial.print(topicChar);
     Serial.print(" with the result: ");
     Serial.println(subscribeResult);
   }
-*/
+  #endif
   return  subscribeResult;
 }
 
@@ -573,12 +587,14 @@ void mqttPublishState(String topic, uint16_t key, uint8_t keyState)
   //Serial.print("After serialize ");
   //Serial.print("doc[state] = ");
   //Serial.println((char*)doc["state"]);
-  boolean publishResult = mqttClient.publish(topicChar, payloadChar, true);  
+  #if mqttDebug
+  boolean publishResult = 
+  #endif
+  mqttClient.publish(topicChar, payloadChar, true);  
   //Serial.print("payloadChar = ");
   //Serial.println(payloadChar);
   
-  if (debugOn)
-  {
+  #if mqttDebugOn
     Serial.print("Published message: ");
     Serial.println(payloadChar);
 
@@ -586,7 +602,7 @@ void mqttPublishState(String topic, uint16_t key, uint8_t keyState)
     Serial.print(topicStr);
     Serial.print(" with the result: ");
     Serial.println(publishResult);
-  }
+  #endif
 }
 
 
@@ -639,19 +655,18 @@ void mqttSendAutoDiscovery(int16_t key, boolean turnON)
   {
     b = serializeJson(doc, payloadChar);
   }
-  
-  boolean publishResult = mqttClient.publish(topicChar, payloadChar, true);
-  /*
-  if (debugOn)
-  {
+  #if mqttDebugOn
+  boolean publishResult = 
+  #endif
+  mqttClient.publish(topicChar, payloadChar, true);
+  #if mqttDebugOn
     Serial.print("Published message: ");
     Serial.println(payloadChar);
     Serial.print(" to topic: ");
     Serial.print(topicStr);
     Serial.print(" with the result: ");
     Serial.println(publishResult);
-  }
-  */
+  #endif
 }
 
 
@@ -729,19 +744,18 @@ void onSwitchPressed(uint8_t key, bool held)
   if (key == 2) //EEPROM clear
   {
     clearEeprom();
-  } else if (key == 3)   //Turn off all leds
+  } else if ((key == 3) || (key == 120))  //Turn off all leds
     {
        for (size_t i=0; i<noOfLeds; i++)
             { 
               ioDeviceDigitalWrite(multiIo, leds[i].ledNo, OFF);
               saveLedStatesToEeprom(leds[i].ledNo,OFF);
               if (mqttConnected) mqttPublishState(ledStateTopic, leds[i].ledNo, OFF);
-              if (debugOn)
-              {
+              #if debugOn
                 Serial.print("Led no: ");
                 Serial.print(leds[i].ledNo);
                 Serial.println(" OFF");
-              }
+              #endif
             }
         ioDeviceSync(multiIo); // force another sync    
     } 
@@ -757,13 +771,12 @@ void onSwitchPressed(uint8_t key, bool held)
             uint8_t newLedState = ioDeviceDigitalReadS(multiIo, pgm_read_byte(&(button2leds[i][j]))+startLedNo);
             Serial.print("Led state changed to: ");
             Serial.println(newLedState);
-            if (debugOn)
-            { 
+            #if debugOn
               Serial.print("LedState of led: ");
-              Serial.print(pgm_read_byte(&(button2leds[i][j]))+startLedNo);
+              Serial.print(pgm_read_byte(&(button2leds[i][j])));
               Serial.print(" = ");
               Serial.println(!ledState);
-            }
+            #endif
             saveLedStatesToEeprom(pgm_read_byte(&(button2leds[i][j]))+startLedNo,!ledState);
             if (mqttConnected) mqttPublishState(ledStateTopic, pgm_read_byte(&(button2leds[i][j]))+startLedNo, !ledState);
             
@@ -771,13 +784,12 @@ void onSwitchPressed(uint8_t key, bool held)
         }
       }
       ioDeviceSync(multiIo); // force another sync
-      if (debugOn)
-      {
+      #if debugOn
         Serial.print("Button "); 
         Serial.print(key);
         Serial.println(held ? " Held down" : " Pressed");
         //serialPrintEeprom();
-      }
+      #endif
       if (mqttConnected) mqttPublishState(buttonStateTopic, key, held);
     }
   }
@@ -801,36 +813,36 @@ void setup() {
   //Serial.println(sizeof(button2leds));
  
   // Add an 8574A chip that allocates 10 more pins, therefore it goes from startLedNo..startLedNo+9
-  multiIoAddExpander(multiIo, ioFrom8574(0x38), 10);
+  multiIoAddExpander(multiIo, ioFrom8574(0x38), 20);
   if (debugOn) Serial.println("added an expander at pin 80 to 89");
 
   // Add an 8574A chip that allocates 10 more pins, therefore it goes from startLedNo..startLedNo+9
-  multiIoAddExpander(multiIo, ioFrom8574(0x39), 10);
-  if (debugOn) Serial.println("added an expander at pin 90 to 99");
+  //multiIoAddExpander(multiIo, ioFrom8574(0x39), 10);
+  //if (debugOn) Serial.println("added an expander at pin 90 to 99");
 
   // Add an 8574A chip that allocates 10 more pins, therefore it goes from startLedNo..startLedNo+9
-  multiIoAddExpander(multiIo, ioFrom8574(0x3A), 10);
+  multiIoAddExpander(multiIo, ioFrom8574(0x3A), 20);
   if (debugOn) Serial.println("added an expander at pin 100 to 109");
 
   // Add an 8574A chip that allocates 10 more pins, therefore it goes from startLedNo..startLedNo+9
-  multiIoAddExpander(multiIo, ioFrom8574(0x3B), 10);
-  if (debugOn) Serial.println("added an expander at pin 110 to 119");
+  //multiIoAddExpander(multiIo, ioFrom8574(0x3B), 10);
+  //if (debugOn) Serial.println("added an expander at pin 110 to 119");
 
   // Add an 8574A chip that allocates 10 more pins, therefore it goes from startLedNo..startLedNo+9
-  multiIoAddExpander(multiIo, ioFrom8574(0x3C), 10);
+  multiIoAddExpander(multiIo, ioFrom8574(0x3C), 20);
   if (debugOn) Serial.println("added an expander at pin 120 to 129");
 
   // Add an 8574A chip that allocates 10 more pins, therefore it goes from startLedNo..startLedNo+9
-  multiIoAddExpander(multiIo, ioFrom8574(0x3D), 10);
-  if (debugOn) Serial.println("added an expander at pin 130 to 139");
+  //multiIoAddExpander(multiIo, ioFrom8574(0x3D), 10);
+  //if (debugOn) Serial.println("added an expander at pin 130 to 139");
 
   // Add an 8574A chip that allocates 10 more pins, therefore it goes from startLedNo..startLedNo+9
-  multiIoAddExpander(multiIo, ioFrom8574(0x3E), 10);
+  multiIoAddExpander(multiIo, ioFrom8574(0x3E), 20);
   if (debugOn) Serial.println("added an expander at pin 140 to 159");
 
   // Add an 8574A chip that allocates 10 more pins, therefore it goes from startLedNo..startLedNo+9
-  multiIoAddExpander(multiIo, ioFrom8574(0x3F), 10);
-  if (debugOn) Serial.println("added an expander at pin 150 to 159");
+  //multiIoAddExpander(multiIo, ioFrom8574(0x3F), 10);
+  //if (debugOn) Serial.println("added an expander at pin 150 to 159");
 
 
   // Add an 8574 chip that allocates 10 more pins, therefore it goes from startLedNo..startLedNo+9
@@ -850,12 +862,12 @@ void setup() {
   if (debugOn) Serial.println("added an expander at pin 190 to 199");
 
   // Add an 8574 chip that allocates 10 more pins, therefore it goes from startLedNo+40..startLedNo+49
-  //multiIoAddExpander(multiIo, ioFrom8574(0x24), 10);
-  //if (debugOn) Serial.println("added an expander at pin 200 to 209");
+  multiIoAddExpander(multiIo, ioFrom8574(0x24), 10);
+  if (debugOn) Serial.println("added an expander at pin 200 to 209");
 
   // Add an 8574 chip that allocates 10 more pins, therefore it goes from startLedNo+50..startLedNo+59
-  //multiIoAddExpander(multiIo, ioFrom8574(0x25), 10);
-  //if (debugOn) Serial.println("added an expander at pin 210 to 219");
+  multiIoAddExpander(multiIo, ioFrom8574(0x25), 10);
+  if (debugOn) Serial.println("added an expander at pin 210 to 219");
 
   Serial.print("Number of leds defined:");
   Serial.println(noOfLeds);
