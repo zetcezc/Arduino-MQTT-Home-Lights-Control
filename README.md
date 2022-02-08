@@ -10,7 +10,7 @@ My idea was to design the system which would
 - be independent from network infrastructure but could benefit it
 - easy to build using ready hardware modules (this I could not achieve completely - but maybe you can if you need less input/output connections
 
-The prerequisite is that every light and every button in your house is connected by cable with one central place. 
+The prerequisite is that every light and every button in your house is wired with one central place. 
 You also must use wall buttons - not wall switches - they have a spring inside and are closed only as long as you keep them pressed.
 
 Arduino is the brain which listens to buttons connected to input pins and turns on/off output pins connected to relays, which control lights. In the current version it also stores in flash memory the table with the definition which buttons control which set of lamps. And that's it if we talk about basic functionality. 
@@ -23,7 +23,8 @@ In theory you could combine 8 x PCF8574 + 8 x PCF8574A expanders (limit of the a
 Output PINS are connected to SSR relays and standard relays to allow switching 230V lights.
 
 And this works fine standalone, but here comes the more interesting part if you want to integrate it with home automation system - MQTT. <br>
-If Arduino succeeds in connecting to MQTT broker - it uses MQTT communication to send button press events to topics and turns on lights by incoming MQTT messages.
+If Arduino succeeds in connecting to MQTT broker - it uses MQTT communication to send button press events to topics and turns on lights by incoming MQTT messages. <br>
+You can also control particular light via MQTT and see their state. <br>
 MQTT can be used to enable auto discovery of lights and buttons. I used Home Assistant syntax.
 
 
