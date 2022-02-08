@@ -1,4 +1,4 @@
-# Arduino (&MQTT) Home Lights Control
+# Arduino ( & MQTT ) Home Lights Control
 
 Project in progress for my house lights automation
 
