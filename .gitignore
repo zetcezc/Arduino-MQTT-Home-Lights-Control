@@ -17,3 +17,4 @@ bin-release/
 # should NOT be excluded as they contain compiler settings and other important
 # information for Eclipse / Flash Builder.
 backup/src working to switch to 2 arduinos/main.cpp
+ArduinoMQTTHomeLightsControl/src/secrets.txt
