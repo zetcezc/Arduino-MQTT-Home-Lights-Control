@@ -91,8 +91,13 @@ VERSION NOTES:
 
 
 
-// Serial prints only in this mode (under implementation)
+// Some areas of code shuld be compiled only in production - not in test mode
+#define prodMode 1
+
+//debug comments printed
 #define debugOn 1
+
+//debug MQTT comments printed
 #define mqttDebugOn 0
 
 #define buttonSetTopic "arduino01/button/set"
@@ -144,7 +149,7 @@ led leds[] =
     ,{startLedNo+3,OFF,1,"Krysia ref."}
     ,{startLedNo+4,OFF,1,"Susz. sufit"}
     ,{startLedNo+5,OFF,1,"Prac. sufit"}
-    ,{startLedNo+6,OFF,1,"Led 06"}                 // tu podlaczyc led lazienka -----------
+    ,{startLedNo+6,OFF,1,"Łaz. led"}                 
     ,{startLedNo+7,OFF,1,"Susz. des."}
     
     ,{startLedNo+10,OFF,1,"Janek sam."}
@@ -177,11 +182,11 @@ led leds[] =
     ,{startLedNo+40,OFF,1,"Salon suf."}
     ,{startLedNo+41,OFF,1,"WC sufit"}
     ,{startLedNo+42,OFF,1,"Garderoba"}
-    ,{startLedNo+43,OFF,1,"Taras las"}    // zewnętrzne
+    ,{startLedNo+43,OFF,0,"ERROR"}    // zewnętrzne
     ,{startLedNo+44,OFF,1,"Led 44"}
     ,{startLedNo+45,OFF,1,"Taras bok"}
     ,{startLedNo+46,OFF,1,"Wej.gosp."}
-    ,{startLedNo+47,OFF,1,"Led 47"}
+    ,{startLedNo+47,OFF,1,"Taras las"}
     
     ,{startLedNo+50,OFF,1,"Salon KL1"}
     ,{startLedNo+51,OFF,1,"WC lustro"}
@@ -201,6 +206,7 @@ led leds[] =
     ,{startLedNo+66,OFF,0,"Led 66"}
     ,{startLedNo+67,OFF,0,"Led 67"}
     
+    /*
     ,{startLedNo+70,OFF,0,"Led 70"}
     ,{startLedNo+71,OFF,0,"Led 71"}
     ,{startLedNo+72,OFF,0,"Led 72"}
@@ -209,22 +215,7 @@ led leds[] =
     ,{startLedNo+75,OFF,0,"Led 75"}
     ,{startLedNo+76,OFF,0,"Led 76"}
     ,{startLedNo+77,OFF,0,"Led 77"}
-    
-    //,{startLedNo+70,OFF,0,"Led 70"},{startLedNo+71,OFF,0,"Led 71"},{startLedNo+72,OFF,0,"Led 72"},{startLedNo+73,OFF,0,"Led 73"},{startLedNo+74,OFF,0,"Led 74"},{startLedNo+75,OFF,0,"Led 75"},{startLedNo+76,OFF,0,"Led 76"},{startLedNo+77,OFF,0,"Led 77"}
-    
-    // brakuje: 
-    //     Parter: 
-    //        TV kinkiety tył, 
-    //        Hall małe
-    //        Zewn  wejście gospodarcze.
-    
-    
-    
-    
-    
-    
-    
-    
+    */
   };
 
 //Define number of buttons (outputs/LEDs)
@@ -249,7 +240,7 @@ Without this trick Outputs on the expander don't work ;)
 const uint8_t  button2leds[][maxNoOfLedsPerButton+1] PROGMEM = 
   { {2,vL,vL,vL,vL,vL}, //this one clears EEPROM
     {3,vL,vL,vL,vL,vL}, //this one to turn all off
-    {6,vL,vL,vL,vL,vL}, //this one is planned to do reset
+    {6,vL,vL,vL,vL,vL}, //this one is wired do reset
     {7,vL,vL,vL,vL,vL},  //P0 Kitchen 1
     {8,5,vL,vL,vL,vL},   //P1 Office room 1
     {9,54,vL,vL,vL,vL},  //P0 TV 4
@@ -332,7 +323,7 @@ const uint8_t  button2leds[][maxNoOfLedsPerButton+1] PROGMEM =
     {121,vL,vL,vL,vL,vL},  //NN
     {122,33,vL,vL,vL,vL},  //P1 Antresola Janek 1
     {123,45,vL,vL,vL,vL},  //P0 Dining W1  
-    {124,vL,vL,vL,vL,vL},  //P1 Antresola bathroom 2   -  ledy nocne
+    {124,6,vL,vL,vL,vL},  //P1 Antresola bathroom 2   -  ledy nocne
     {125,22,vL,vL,vL,vL},  //P0 gosp 2                                 
     {126,4,vL,vL,vL,vL},  //P1 Washroom 2
     {127,vL,vL,vL,vL,vL},  //NC - no cable
@@ -880,13 +871,13 @@ void setup() {
   multiIoAddExpander(multiIo, ioFrom8574(0x25), 10);
   if (debugOn) Serial.println("added an expander at pin 210 to 219");
 
- // Add an 8574 chip that allocates 10 more pins, therefore it goes from startLedNo+50..startLedNo+59
+  // Add an 8574 chip that allocates 10 more pins, therefore it goes from startLedNo+50..startLedNo+59
   multiIoAddExpander(multiIo, ioFrom8574(0x26), 10);
   if (debugOn) Serial.println("added an expander at pin 220 to 229");
 
-   // Add an 8574 chip that allocates 10 more pins, therefore it goes from startLedNo+50..startLedNo+59
-  multiIoAddExpander(multiIo, ioFrom8574(0x27), 10);
-  if (debugOn) Serial.println("added an expander at pin 230 to 239");
+  // Add an 8574 chip that allocates 10 more pins, therefore it goes from startLedNo+50..startLedNo+59
+  //multiIoAddExpander(multiIo, ioFrom8574(0x27), 10);
+  //if (debugOn) Serial.println("added an expander at pin 230 to 239");
 
 
   Serial.print("Number of leds defined:");
