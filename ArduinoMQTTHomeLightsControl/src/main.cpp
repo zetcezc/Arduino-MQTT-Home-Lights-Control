@@ -76,6 +76,7 @@ VERSION NOTES:
       - tested in production environment
 1.0.1 - Bugfixes and minor code improvement
       - Light conf adjustment  
+1.0.2 - Current production version
 */
 
 
@@ -116,6 +117,7 @@ byte mac[] = { 0xDE, 0xAD, 0xBE, 0xEF, 0xFE, 0xAD };
 IPAddress ip(192, 168, 1, 203); // Arduino IP address
 IPAddress myDns(192, 168, 1, 1); //DNS ip
 IPAddress mqttBrokerIp(192, 168, 1, 11); // MQTT broker IP adress
+
 #define mqttUser "homeassistant"
 #define mqttPasswd "aih1xo6oqueazeSa5oojootebo6Baj0aochizeThaighieghahdieBeco7phei7s"
 
