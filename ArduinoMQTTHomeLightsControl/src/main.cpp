@@ -77,6 +77,7 @@ VERSION NOTES:
 1.0.1 - Bugfixes and minor code improvement
       - Light conf adjustment  
 1.0.2 - Current production version
+1.0.3 - HA user/passwrd moved to secrets.txt
 */
 
 
@@ -96,21 +97,16 @@ VERSION NOTES:
 #define prodMode 1
 
 //debug comments printed
-#define debugOn 1
+#define debugOn 0
 
 //debug MQTT comments printed
 #define mqttDebugOn 0
 
+#if prodMode
 #define buttonSetTopic "arduino01/button/set"
 #define buttonStateTopic "arduino01/button/state"
 #define ledSetTopic "arduino01/led/set"
 #define ledStateTopic "arduino01/led/state"
-
-//define ON/OFF for low triggered output PINs
-#define ON 0
-#define OFF 1
-#define ledsAutoDiscovery 1
-#define buttonsAutoDiscovery 1
 
 //Setting up Ethernet shield
 byte mac[] = { 0xDE, 0xAD, 0xBE, 0xEF, 0xFE, 0xAD };
@@ -118,8 +114,33 @@ IPAddress ip(192, 168, 1, 203); // Arduino IP address
 IPAddress myDns(192, 168, 1, 1); //DNS ip
 IPAddress mqttBrokerIp(192, 168, 1, 11); // MQTT broker IP adress
 
-#define mqttUser "homeassistant"
-#define mqttPasswd "aih1xo6oqueazeSa5oojootebo6Baj0aochizeThaighieghahdieBeco7phei7s"
+#else
+#define buttonSetTopic "arduino-test/button/set"
+#define buttonStateTopic "arduino-test/button/state"
+#define ledSetTopic "arduino-test/led/set"
+#define ledStateTopic "arduino-test/led/state"
+
+//Setting up Ethernet shield
+byte mac[] = { 0xDE, 0xAD, 0xBE, 0xEF, 0xFE, 0xAC };
+IPAddress ip(192, 168, 1, 204); // Arduino IP address
+IPAddress myDns(192, 168, 1, 1); //DNS ip
+IPAddress mqttBrokerIp(192, 168, 1, 11); // MQTT broker IP adress
+
+#endif
+
+
+
+
+
+//define ON/OFF for low triggered output PINs
+#define ON 0
+#define OFF 1
+#define ledsAutoDiscovery 1
+#define buttonsAutoDiscovery 1
+
+
+#include "secrets.txt"
+
 
 // no of PINS reserved for Arduino; first expander's PIN will start from EXPANDER1 value
 #define ArduinoPins 80
@@ -243,7 +264,7 @@ const uint8_t  button2leds[][maxNoOfLedsPerButton+1] PROGMEM =
   { {2,vL,vL,vL,vL,vL}, //this one clears EEPROM
     {3,vL,vL,vL,vL,vL}, //this one to turn all off
     {6,vL,vL,vL,vL,vL}, //this one is wired do reset
-    {7,vL,vL,vL,vL,vL},  //P0 Kitchen 1
+    {7,32,vL,vL,vL,vL},  //P0 Kitchen 1
     {8,5,vL,vL,vL,vL},   //P1 Office room 1
     {9,54,vL,vL,vL,vL},  //P0 TV 4
     {11,54,vL,vL,vL,vL},  //P0 TV 3
@@ -256,7 +277,7 @@ const uint8_t  button2leds[][maxNoOfLedsPerButton+1] PROGMEM =
     {18,64,vL,vL,vL,vL},  //P0 TV 1
     {19,41,vL,vL,vL,vL},  //P0 WC 1
     {22,45,vL,vL,vL,vL},  //P0 Dining N1
-    {23,52,vL,vL,vL,vL},  //P0 TV blinds 2
+    {23,64,vL,vL,vL,vL},  //P0 TV blinds 2 - (kinkiet tyl=52)
     {24,43,vL,vL,vL,vL},  //P0 Dining N2
     {25,64,vL,vL,vL,vL},  //P0 TV blinds 1
     {26,16,vL,vL,vL,vL},  //P1 Antresola bathroom 1
@@ -279,7 +300,7 @@ const uint8_t  button2leds[][maxNoOfLedsPerButton+1] PROGMEM =
     {41,34,61,62,vL,vL},  //P0 Dining N6
     {42,40,vL,vL,vL,vL},  //P0 Dining N5
     {43,42,vL,vL,vL,vL},  //P0 Wardrobe 2
-    {44,vL,vL,vL,vL,vL},  //P0 Hall 3 
+    {44,32,vL,vL,vL,vL},  //P0 Hall 3 
     {45,0,vL,vL,vL,vL},   //P1 Antresola SypEZ 2                        
     {46,63,vL,vL,vL,vL},  //P0 Dining N4
     {47,22,vL,vL,vL,vL},   //P1 gosp door 2
@@ -315,7 +336,7 @@ const uint8_t  button2leds[][maxNoOfLedsPerButton+1] PROGMEM =
     {100,43,vL,vL,vL,vL},  //P0 Dining W2   
     {101,11,vL,vL,vL,vL},  //P1 SypEZ 2
     {102,vL,vL,vL,vL,vL},  //NN
-    {103,52,vL,vL,vL,vL},  //P0 TV 2
+    {103,64,vL,vL,vL,vL},  //P0 TV 2  
     {104,3,vL,vL,vL,vL},   //P1 Krysia 2
     {105,23,vL,vL,vL,vL},  //P0 Hall 4                                 
     {106,24,57,vL,vL,vL},  //P0 Dining N3
@@ -591,7 +612,7 @@ void mqttPublishState(String topic, uint16_t key, uint8_t keyState)
   //Serial.print("After serialize ");
   //Serial.print("doc[state] = ");
   //Serial.println((char*)doc["state"]);
-  #if mqttDebug
+  #if mqttDebugOn
   boolean publishResult = 
   #endif
   mqttClient.publish(topicChar, payloadChar, true);  
@@ -773,10 +794,9 @@ void onSwitchPressed(uint8_t key, bool held)
             ledState = ioDeviceDigitalReadS(multiIo, pgm_read_byte(&(button2leds[i][j]))+startLedNo);
             ioDeviceDigitalWrite(multiIo, pgm_read_byte(&(button2leds[i][j]))+startLedNo, !ledState);
             uint8_t newLedState = ioDeviceDigitalReadS(multiIo, pgm_read_byte(&(button2leds[i][j]))+startLedNo);
-            Serial.print("Led state changed to: ");
-            Serial.println(newLedState);
             #if debugOn
-              Serial.print("LedState of led: ");
+              Serial.print("Led state changed to: ");
+              Serial.println(newLedState);  Serial.print("LedState of led: ");
               Serial.print(pgm_read_byte(&(button2leds[i][j])));
               Serial.print(" = ");
               Serial.println(!ledState);
