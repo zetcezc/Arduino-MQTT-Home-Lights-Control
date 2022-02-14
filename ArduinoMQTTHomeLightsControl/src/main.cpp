@@ -144,7 +144,11 @@ IPAddress mqttBrokerIp(192, 168, 1, 11); // MQTT broker IP adress
 
 // no of PINS reserved for Arduino; first expander's PIN will start from EXPANDER1 value
 #define ArduinoPins 80
-#define startLedNo 160
+#if prodMode
+  #define startLedNo 160
+#else
+  #define startLedNo 40
+#endif
 
 boolean mqttConnected = 0;
 
@@ -166,7 +170,9 @@ struct led
 //define initial state. Will be used if no EEPROM value found.
 //By default ledAutoDiscovery is set to 0. Change to 1 for leds that shoudl be visible in HomeAssistant.
 led leds[] = 
-  {  {startLedNo,OFF,1,"Antresola"}
+  {  
+#if prodMode    
+     {startLedNo,OFF,1,"Antresola"}
     ,{startLedNo+1,OFF,1,"Łaz. prysz."}
     ,{startLedNo+2,OFF,1,"Krysia str."}
     ,{startLedNo+3,OFF,1,"Krysia ref."}
@@ -239,6 +245,16 @@ led leds[] =
     ,{startLedNo+76,OFF,0,"Led 76"}
     ,{startLedNo+77,OFF,0,"Led 77"}
     */
+#else
+     {startLedNo,OFF,1,"Antresola"}
+    ,{startLedNo+1,OFF,1,"Łaz. prysz."}
+    ,{startLedNo+2,OFF,1,"Krysia str."}
+    //,{startLedNo+3,OFF,1,"Krysia ref."}
+    //,{startLedNo+4,OFF,1,"Susz. sufit"}
+    //,{startLedNo+5,OFF,1,"Prac. sufit"}
+    //,{startLedNo+6,OFF,1,"Łaz. led"}                 
+    //,{startLedNo+7,OFF,1,"Susz. des."}
+#endif
   };
 
 //Define number of buttons (outputs/LEDs)
@@ -261,7 +277,9 @@ Without this trick Outputs on the expander don't work ;)
 #define vL 255
 
 const uint8_t  button2leds[][maxNoOfLedsPerButton+1] PROGMEM = 
-  { {2,vL,vL,vL,vL,vL}, //this one clears EEPROM
+  { 
+#if prodMode    
+    {2,vL,vL,vL,vL,vL}, //this one clears EEPROM
     {3,vL,vL,vL,vL,vL}, //this one to turn all off
     {6,vL,vL,vL,vL,vL}, //this one is wired do reset
     {7,32,vL,vL,vL,vL},  //P0 Kitchen 1
@@ -369,7 +387,18 @@ const uint8_t  button2leds[][maxNoOfLedsPerButton+1] PROGMEM =
     {startLedNo+50,vL,vL,vL,vL,vL},  //to make outputs on expander 0x25 work
     {startLedNo+60,vL,vL,vL,vL,vL}, //to make outputs on expander 0x25 work
     {startLedNo+70,vL,vL,vL,vL,vL}  //to make outputs on expander 0x25 work
-    
+#else
+    {2,vL,vL,vL,vL,vL}, //this one clears EEPROM
+    {3,vL,vL,vL,vL,vL}, //this one to turn all off
+    {6,vL,vL,vL,vL,vL}, //this one is wired do reset
+    {7,0,vL,vL,vL,vL},  //P0 Kitchen 1
+    {8,1,vL,vL,vL,vL},   //P1 Office room 1
+    {9,2,vL,vL,vL,vL},  //P0 TV 4
+    {11,vL,vL,vL,vL,vL},  //P0 TV 3
+    {12,vL,vL,vL,vL,vL},  //P1 Office room 2
+    {14,vL,vL,vL,vL,vL},  //P0 Kitchen 3
+    {15,vL,vL,vL,vL,vL},  //P0 Kitchen 4
+#endif
   };
 
 //count the number of buttons
@@ -387,6 +416,7 @@ struct button
 // change 1 to 0 if you want to remove from auto discovery
 button buttons[] = 
 {
+#if prodMode
   {2,1,"CLR EEPROM"},
   {3,1,"All Leds OFF"},
 
@@ -485,7 +515,11 @@ button buttons[] =
   {154,1,"Krysia 4"},
 
 */
-  
+#else
+  {2,1,"TEST CLR EEPROM"},
+  {3,1,"TEST All Leds OFF"},
+
+#endif
 };
 
 size_t noOfButtons2 = sizeof(buttons) / sizeof(buttons[0]);
@@ -555,7 +589,6 @@ boolean mqttConnect()
     Serial.println("MQTT Connection failed. Arduino only mode.");
     return 0;
   }
-    
 }
 
 //subsribe to topic constructed of topic/key
@@ -567,14 +600,13 @@ int8_t mqttSubscribeToTopic(String topic, uint16_t key)
   topicStr = topicStr + "/" + keyStr;
   topicStr.toCharArray(topicChar,topicStr.length()+1);
   int8_t subscribeResult = mqttClient.subscribe(topicChar);
-  #if mqttDebugOn
+  if (mqttDebugOn)
   {
     Serial.print("Subscribed to topic: ");
     Serial.print(topicChar);
     Serial.print(" with the result: ");
     Serial.println(subscribeResult);
   }
-  #endif
   return  subscribeResult;
 }
 
@@ -612,28 +644,23 @@ void mqttPublishState(String topic, uint16_t key, uint8_t keyState)
   //Serial.print("After serialize ");
   //Serial.print("doc[state] = ");
   //Serial.println((char*)doc["state"]);
-  #if mqttDebugOn
-  boolean publishResult = 
-  #endif
-  mqttClient.publish(topicChar, payloadChar, true);  
+  boolean publishResult = mqttClient.publish(topicChar, payloadChar, true);  
   //Serial.print("payloadChar = ");
   //Serial.println(payloadChar);
-  
-  #if mqttDebugOn
-    Serial.print("Published message: ");
+  if (mqttDebugOn)
+  { Serial.print("Published message: ");
     Serial.println(payloadChar);
 
     Serial.print(" to topic: ");
     Serial.print(topicStr);
     Serial.print(" with the result: ");
     Serial.println(publishResult);
-  #endif
+  }
 }
 
 
 void mqttSendAutoDiscovery(int16_t key, boolean turnON)
 {   
-  //DynamicJsonDocument doc(1024);
   StaticJsonDocument<512> doc;
   String keyStr = String(key).c_str();
   String topicStr;
@@ -680,18 +707,15 @@ void mqttSendAutoDiscovery(int16_t key, boolean turnON)
   {
     b = serializeJson(doc, payloadChar);
   }
-  #if mqttDebugOn
-  boolean publishResult = 
-  #endif
-  mqttClient.publish(topicChar, payloadChar, true);
-  #if mqttDebugOn
-    Serial.print("Published message: ");
+  boolean publishResult = mqttClient.publish(topicChar, payloadChar, true);
+  if (mqttDebugOn)
+  { Serial.print("Published message: ");
     Serial.println(payloadChar);
     Serial.print(" to topic: ");
     Serial.print(topicStr);
     Serial.print(" with the result: ");
     Serial.println(publishResult);
-  #endif
+  }
 }
 
 
