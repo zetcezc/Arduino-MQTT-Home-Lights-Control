@@ -78,6 +78,7 @@ VERSION NOTES:
       - Light conf adjustment  
 1.0.2 - Current production version
 1.0.3 - HA user/passwrd moved to secrets.txt
+1.0.4 - DEV - Smart lights
 */
 
 
@@ -94,13 +95,13 @@ VERSION NOTES:
 
 
 // Some areas of code shuld be compiled only in production - not in test mode
-#define prodMode 1
+#define prodMode 0
 
 //debug comments printed
-#define debugOn 0
+#define debugOn 1
 
 //debug MQTT comments printed
-#define mqttDebugOn 0
+#define mqttDebugOn 1
 
 #if prodMode
 #define buttonSetTopic "arduino01/button/set"
@@ -119,9 +120,10 @@ IPAddress mqttBrokerIp(192, 168, 1, 11); // MQTT broker IP adress
 #define buttonStateTopic "arduino-test/button/state"
 #define ledSetTopic "arduino-test/led/set"
 #define ledStateTopic "arduino-test/led/state"
+#define nodeRedLedTopic "nodered01/led/set"
 
 //Setting up Ethernet shield
-byte mac[] = { 0xDE, 0xAD, 0xBE, 0xEF, 0xFE, 0xAC };
+byte mac[] = { 0xDE, 0xAD, 0xBE, 0xEF, 0xFF, 0xAC };
 IPAddress ip(192, 168, 1, 204); // Arduino IP address
 IPAddress myDns(192, 168, 1, 1); //DNS ip
 IPAddress mqttBrokerIp(192, 168, 1, 11); // MQTT broker IP adress
@@ -158,11 +160,15 @@ MultiIoAbstractionRef multiIo = multiIoExpander(ArduinoPins);
 EthernetClient ethClient;
 PubSubClient mqttClient(mqttBrokerIp, 1883, ethClient);
 
+#define stdLed 0
+#define hueLed 1 
+
 struct led
 { 
   uint8_t ledNo;
   boolean ledState;
   boolean ledAutoDiscovery;
+  uint8_t ledType;
   char ledName[14];
 };
 
@@ -172,59 +178,59 @@ struct led
 led leds[] = 
   {  
 #if prodMode    
-     {startLedNo,OFF,1,"Antresola"}
-    ,{startLedNo+1,OFF,1,"Łaz. prysz."}
-    ,{startLedNo+2,OFF,1,"Krysia str."}
-    ,{startLedNo+3,OFF,1,"Krysia ref."}
-    ,{startLedNo+4,OFF,1,"Susz. sufit"}
-    ,{startLedNo+5,OFF,1,"Prac. sufit"}
-    ,{startLedNo+6,OFF,1,"Łaz. led"}                 
-    ,{startLedNo+7,OFF,1,"Susz. des."}
+     {startLedNo,OFF,1,0,"Antresola"}
+    ,{startLedNo+1,OFF,1,0,"Łaz. prysz."}
+    ,{startLedNo+2,OFF,1,0,"Krysia str."}
+    ,{startLedNo+3,OFF,1,0,"Krysia ref."}
+    ,{startLedNo+4,OFF,1,0,"Susz. sufit"}
+    ,{startLedNo+5,OFF,1,0,"Prac. sufit"}
+    ,{startLedNo+6,OFF,1,0,"Łaz. led"}                 
+    ,{startLedNo+7,OFF,1,0,"Susz. des."}
     
-    ,{startLedNo+10,OFF,1,"Janek sam."}
-    ,{startLedNo+11,OFF,1,"Syp. EZ ref."}
-    ,{startLedNo+12,OFF,1,"Łaz. lustro"}
-    ,{startLedNo+13,OFF,1,"Syp. EZ suf."}
-    ,{startLedNo+14,OFF,1,"Krysia suf."}
-    ,{startLedNo+15,OFF,1,"Prac. biurka"}
-    ,{startLedNo+16,OFF,1,"Łaz. sufit"}
-    ,{startLedNo+17,OFF,1,"Janek ref."}
+    ,{startLedNo+10,OFF,1,0,"Janek sam."}
+    ,{startLedNo+11,OFF,1,0,"Syp. EZ ref."}
+    ,{startLedNo+12,OFF,1,0,"Łaz. lustro"}
+    ,{startLedNo+13,OFF,1,0,"Syp. EZ suf."}
+    ,{startLedNo+14,OFF,1,0,"Krysia suf."}
+    ,{startLedNo+15,OFF,1,0,"Prac. biurka"}
+    ,{startLedNo+16,OFF,1,0,"Łaz. sufit"}
+    ,{startLedNo+17,OFF,1,0,"Janek ref."}
     
-    ,{startLedNo+20,OFF,1,"Led 20"}
-    ,{startLedNo+21,OFF,1,"Led 21"}
-    ,{startLedNo+22,OFF,1,"Gospodarcze"}
-    ,{startLedNo+23,OFF,1,"Hall duże"}
-    ,{startLedNo+24,OFF,1,"Jad. kwia.1"}
-    ,{startLedNo+25,OFF,1,"Led 25"}
-    ,{startLedNo+26,OFF,1,"Kuch. suf."}
-    ,{startLedNo+27,OFF,1,"Led 27"}
+    ,{startLedNo+20,OFF,1,0,"Led 20"}
+    ,{startLedNo+21,OFF,1,0,"Led 21"}
+    ,{startLedNo+22,OFF,1,0,"Gospodarcze"}
+    ,{startLedNo+23,OFF,1,0,"Hall duże"}
+    ,{startLedNo+24,OFF,1,0,"Jad. kwia.1"}
+    ,{startLedNo+25,OFF,1,0,"Led 25"}
+    ,{startLedNo+26,OFF,1,0,"Kuch. suf."}
+    ,{startLedNo+27,OFF,1,0,"Led 27"}
 
-    ,{startLedNo+30,OFF,1,"Led 30"}
-    ,{startLedNo+31,OFF,1,"Wejście"}
-    ,{startLedNo+32,OFF,1,"Hall wejście"}
-    ,{startLedNo+33,OFF,1,"Schody"}
-    ,{startLedNo+34,OFF,1,"Salon akw.L"}
-    ,{startLedNo+35,OFF,1,"Kuch. stół"}
-    ,{startLedNo+36,OFF,1,"Salon KL2"}
-    ,{startLedNo+37,OFF,1,"WC prysz."}
+    ,{startLedNo+30,OFF,1,0,"Led 30"}
+    ,{startLedNo+31,OFF,1,0,"Wejście"}
+    ,{startLedNo+32,OFF,1,0,"Hall wejście"}
+    ,{startLedNo+33,OFF,1,0,"Schody"}
+    ,{startLedNo+34,OFF,1,0,"Salon akw.L"}
+    ,{startLedNo+35,OFF,1,0,"Kuch. stół"}
+    ,{startLedNo+36,OFF,1,0,"Salon KL2"}
+    ,{startLedNo+37,OFF,1,0,"WC prysz."}
     
-    ,{startLedNo+40,OFF,1,"Salon suf."}
-    ,{startLedNo+41,OFF,1,"WC sufit"}
-    ,{startLedNo+42,OFF,1,"Garderoba"}
-    ,{startLedNo+43,OFF,0,"ERROR"}    // zewnętrzne
-    ,{startLedNo+44,OFF,1,"Led 44"}
-    ,{startLedNo+45,OFF,1,"Taras bok"}
-    ,{startLedNo+46,OFF,1,"Wej.gosp."}
-    ,{startLedNo+47,OFF,1,"Taras las"}
+    ,{startLedNo+40,OFF,1,0,"Salon suf."}
+    ,{startLedNo+41,OFF,1,0,"WC sufit"}
+    ,{startLedNo+42,OFF,1,0,"Garderoba"}
+    ,{startLedNo+43,OFF,0,0,"ERROR"}    // zewnętrzne
+    ,{startLedNo+44,OFF,1,0,"Led 44"}
+    ,{startLedNo+45,OFF,1,0,"Taras bok"}
+    ,{startLedNo+46,OFF,1,0,"Wej.gosp."}
+    ,{startLedNo+47,OFF,1,0,"Taras las"}
     
-    ,{startLedNo+50,OFF,1,"Salon KL1"}
-    ,{startLedNo+51,OFF,1,"WC lustro"}
-    ,{startLedNo+52,OFF,1,"TV kin.tył"}
-    ,{startLedNo+53,OFF,1,"Salon KP2"}
-    ,{startLedNo+54,OFF,1,"TV sufit"}
-    ,{startLedNo+55,OFF,1,"Salon KP1"}
-    ,{startLedNo+56,OFF,1,"Kuch. zlew"}
-    ,{startLedNo+57,OFF,1,"Jad. kwia.2"}
+    ,{startLedNo+50,OFF,1,0,"Salon KL1"}
+    ,{startLedNo+51,OFF,1,0,"WC lustro"}
+    ,{startLedNo+52,OFF,1,0,"TV kin.tył"}
+    ,{startLedNo+53,OFF,1,0,"Salon KP2"}
+    ,{startLedNo+54,OFF,1,0,"TV sufit"}
+    ,{startLedNo+55,OFF,1,0,"Salon KP1"}
+    ,{startLedNo+56,OFF,1,0,"Kuch. zlew"}
+    ,{startLedNo+57,OFF,1,0,"Jad. kwia.2"}
     
     ,{startLedNo+60,OFF,0,"Kuch. blat"}
     ,{startLedNo+61,OFF,0,"Salon akw.P"}
@@ -246,14 +252,14 @@ led leds[] =
     ,{startLedNo+77,OFF,0,"Led 77"}
     */
 #else
-     {startLedNo,OFF,1,"Antresola"}
-    ,{startLedNo+1,OFF,1,"Łaz. prysz."}
-    ,{startLedNo+2,OFF,1,"Krysia str."}
-    //,{startLedNo+3,OFF,1,"Krysia ref."}
-    //,{startLedNo+4,OFF,1,"Susz. sufit"}
-    //,{startLedNo+5,OFF,1,"Prac. sufit"}
-    //,{startLedNo+6,OFF,1,"Łaz. led"}                 
-    //,{startLedNo+7,OFF,1,"Susz. des."}
+     {startLedNo,OFF,1,0,"Antresola"}
+    ,{startLedNo+1,ON,1,hueLed,"Łaz. prysz."}
+    ,{startLedNo+2,OFF,1,0,"Krysia str."}
+    //,{startLedNo+3,OFF,1,0,"Krysia ref."}
+    //,{startLedNo+4,OFF,1,0,"Susz. sufit"}
+    //,{startLedNo+5,OFF,1,0,"Prac. sufit"}
+    //,{startLedNo+6,OFF,1,0,"Łaz. led"}                 
+    //,{startLedNo+7,OFF,1,0,"Susz. des."}
 #endif
   };
 
@@ -556,6 +562,15 @@ void saveLedStatesToEeprom(uint8_t switchedLed, uint8_t ledState)
   
 }
 
+uint8_t isLedSmart(uint8_t key)
+{ uint8_t ledType = 0;
+  for (size_t k=0; k<noOfLeds; k++)
+  {
+   if (leds[k].ledNo == key) {ledType = leds[k].ledType;}
+  }
+  return ledType;
+}
+
 void onSwitchPressed(uint8_t key, bool held); //just the declaration here
 
 //Connect to MQTT broker
@@ -613,40 +628,56 @@ int8_t mqttSubscribeToTopic(String topic, uint16_t key)
 // Publish keyState as payload to MQTT topic named topic/key
 void mqttPublishState(String topic, uint16_t key, uint8_t keyState)
 { 
-  //DynamicJsonDocument doc(1024);
   StaticJsonDocument<512> doc;
   String keyStr = String(key).c_str();
-  //Serial.print("Key in mqqPublish = ");
-  //Serial.println(key);
-  if (key>=startLedNo)
-  {   //Serial.println("I'm in if");
-      doc["state"] = keyState ? "off" : "on";
-      //Serial.print("keyState = ");
-      //Serial.println(keyState);    
-      //doc1["brightness"] = 255;
-  }
-  else
+  Serial.print("Key in mqqPublish = ");
+  Serial.println(key);
+  Serial.print("is led smart = ");
+  Serial.println(isLedSmart(key));
+  if (key>=startLedNo) //this is for led
+    if (!isLedSmart(key))
+    {   doc["state"] = keyState ? "off" : "on";
+        Serial.print("keyState = ");
+        Serial.println(keyState);    
+        //doc1["brightness"] = 255;
+    }
+    else
+    { 
+      doc["on"] = true;
+      doc["incrementBrightness"]=25;
+    }
+  else //this is for button
   {
       doc["state"] = keyState ? "held_down" : "pressed";
   }
-  //Serial.print("Before serialize ");
-  //Serial.print("doc[state] = ");
-  //Serial.println((char*)doc["state"]);
+  Serial.print("Before serialize ");
+  Serial.print("doc[state] = ");
+  Serial.println((char*)doc["state"]);
   char topicChar[50] = {"\0"};
   String topicStr = String(topic).c_str();  
   topicStr = topicStr + "/" + keyStr;
   topicStr.toCharArray(topicChar,topicStr.length()+1);
   char payloadChar[512] = {"\0"};
-  //int b = 
+  int b = 
   serializeJson(doc, payloadChar);
-  //Serial.print("bytes = ");
-  //Serial.println(b,DEC);
-  //Serial.print("After serialize ");
-  //Serial.print("doc[state] = ");
-  //Serial.println((char*)doc["state"]);
+  Serial.print("bytes = ");
+  Serial.println(b,DEC);
+  Serial.print("After serialize ");
+  Serial.print("doc[state] = ");
+  Serial.println((char*)doc["state"]);
+
+  Serial.print("After serialize ");
+  Serial.print("doc[incrementBrightness] = ");
+  Serial.println((char*)doc["incrementBrightness"]);
+  
+  Serial.print("After serialize ");
+  Serial.print("doc[state] = ");
+  Serial.println((char*)doc["state"]);
+  
   boolean publishResult = mqttClient.publish(topicChar, payloadChar, true);  
-  //Serial.print("payloadChar = ");
-  //Serial.println(payloadChar);
+
+  Serial.print("payloadChar = ");
+  Serial.println(payloadChar);
   if (mqttDebugOn)
   { Serial.print("Published message: ");
     Serial.println(payloadChar);
@@ -760,7 +791,7 @@ void callback(char* topic, byte* payload, unsigned int length)
     else if (payloadState.equals("1")||payloadState.equals("hold_down"))
     {
       onSwitchPressed(mqttKey, true);
-      Serial.println("Button hold down by MQTT message");  
+      Serial.println("Button held down by MQTT message");  
     }
   }
   else if (topicPrefixStr.equals(ledSetTopic)) 
@@ -787,7 +818,8 @@ void callback(char* topic, byte* payload, unsigned int length)
 
 // When the button is pressed then this function will be called (both hardware and MQTT button works).
 void onSwitchPressed(uint8_t key, bool held)
-{ if (key<startLedNo)
+{ uint8_t ledType;
+  if (key<startLedNo)
   {
   uint8_t ledState = 2;
   if (key == 2) //EEPROM clear
@@ -796,15 +828,19 @@ void onSwitchPressed(uint8_t key, bool held)
   } else if ((key == 3) || (key == 120))  //Turn off all leds
     {
        for (size_t i=0; i<noOfLeds; i++)
-            { 
-              ioDeviceDigitalWrite(multiIo, leds[i].ledNo, OFF);
-              saveLedStatesToEeprom(leds[i].ledNo,OFF);
-              if (mqttConnected) mqttPublishState(ledStateTopic, leds[i].ledNo, OFF);
-              #if debugOn
-                Serial.print("Led no: ");
-                Serial.print(leds[i].ledNo);
-                Serial.println(" OFF");
-              #endif
+            { if (leds[i].ledType!=0 && mqttConnected )
+              { // set payload and publish to smart led
+              } 
+              else
+              { ioDeviceDigitalWrite(multiIo, leds[i].ledNo, OFF);
+                saveLedStatesToEeprom(leds[i].ledNo,OFF);
+                if (mqttConnected) mqttPublishState(ledStateTopic, leds[i].ledNo, OFF);
+                #if debugOn
+                  Serial.print("Led no: ");
+                  Serial.print(leds[i].ledNo);
+                  Serial.println(" OFF");
+                #endif
+              }
             }
         ioDeviceSync(multiIo); // force another sync    
     } 
@@ -814,20 +850,27 @@ void onSwitchPressed(uint8_t key, bool held)
       { if(pgm_read_byte(&(button2leds[i][0]))==key)
         { for(int j=1;j<maxNoOfLedsPerButton+1;j++) 
           if (pgm_read_byte(&(button2leds[i][j])) != vL)
-          { 
-            ledState = ioDeviceDigitalReadS(multiIo, pgm_read_byte(&(button2leds[i][j]))+startLedNo);
-            ioDeviceDigitalWrite(multiIo, pgm_read_byte(&(button2leds[i][j]))+startLedNo, !ledState);
-            uint8_t newLedState = ioDeviceDigitalReadS(multiIo, pgm_read_byte(&(button2leds[i][j]))+startLedNo);
-            #if debugOn
-              Serial.print("Led state changed to: ");
-              Serial.println(newLedState);  Serial.print("LedState of led: ");
-              Serial.print(pgm_read_byte(&(button2leds[i][j])));
-              Serial.print(" = ");
-              Serial.println(!ledState);
-            #endif
-            saveLedStatesToEeprom(pgm_read_byte(&(button2leds[i][j]))+startLedNo,!ledState);
-            if (mqttConnected) mqttPublishState(ledStateTopic, pgm_read_byte(&(button2leds[i][j]))+startLedNo, !ledState);
-            
+          { for (size_t k=0; k<noOfLeds; k++)
+            {
+              if (leds[k].ledNo==button2leds[i][j]) {ledType = leds[k].ledType;}
+            }
+            if (ledType!=0 && mqttConnected )
+            { mqttPublishState(nodeRedLedTopic, pgm_read_byte(&(button2leds[i][j]))+startLedNo, ON);
+            } 
+            else
+            { 
+              ledState = ioDeviceDigitalReadS(multiIo, pgm_read_byte(&(button2leds[i][j]))+startLedNo);
+              ioDeviceDigitalWrite(multiIo, pgm_read_byte(&(button2leds[i][j]))+startLedNo, held ? OFF : !ledState);
+              #if debugOn
+                uint8_t newLedState = ioDeviceDigitalReadS(multiIo, pgm_read_byte(&(button2leds[i][j]))+startLedNo);  Serial.print("Led state changed to: ");
+                Serial.println(newLedState);  Serial.print("LedState of led: ");
+                Serial.print(pgm_read_byte(&(button2leds[i][j])));
+                Serial.print(" = ");
+                Serial.println(!ledState);
+              #endif
+              saveLedStatesToEeprom(pgm_read_byte(&(button2leds[i][j]))+startLedNo,!ledState);
+              if (mqttConnected) mqttPublishState(ledStateTopic, pgm_read_byte(&(button2leds[i][j]))+startLedNo, !ledState);
+            }
           }
         }
       }
@@ -860,6 +903,7 @@ void setup() {
   // END Setup MQTT
   //Serial.println(sizeof(button2leds));
  
+ #if prodMode
   // Add an 8574A chip that allocates 10 more pins, therefore it goes from startLedNo..startLedNo+9
   multiIoAddExpander(multiIo, ioFrom8574(0x38), 20);
   if (debugOn) Serial.println("added an expander at pin 80 to 89");
@@ -924,7 +968,7 @@ void setup() {
   // Add an 8574 chip that allocates 10 more pins, therefore it goes from startLedNo+50..startLedNo+59
   //multiIoAddExpander(multiIo, ioFrom8574(0x27), 10);
   //if (debugOn) Serial.println("added an expander at pin 230 to 239");
-
+#endif
 
   Serial.print("Number of leds defined:");
   Serial.println(noOfLeds);
