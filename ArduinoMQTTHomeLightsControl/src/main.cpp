@@ -241,7 +241,7 @@ const uint8_t  button2leds[][maxNoOfLedsPerButton+1] PROGMEM =
   { {2,vL,vL,vL,vL,vL}, //this one clears EEPROM
     {3,vL,vL,vL,vL,vL}, //this one to turn all off
     {6,vL,vL,vL,vL,vL}, //this one is wired do reset
-    {7,vL,vL,vL,vL,vL},  //P0 Kitchen 1
+    {7,32,vL,vL,vL,vL},  //P0 Kitchen 1
     {8,5,vL,vL,vL,vL},   //P1 Office room 1
     {9,54,vL,vL,vL,vL},  //P0 TV 4
     {11,54,vL,vL,vL,vL},  //P0 TV 3
@@ -272,12 +272,12 @@ const uint8_t  button2leds[][maxNoOfLedsPerButton+1] PROGMEM =
     {37,34,61,62,vL,vL},  //P0 Salon 7
     
     {38,40,vL,vL,vL,vL},  //P0 Salon 4
-    {39,vL,vL,vL,vL,vL},  //P0 gosp drzwi 1
+    {39,46,vL,vL,vL,vL},  //P0 gosp drzwi 1
     {40,51,vL,vL,vL,vL},  //P0 WC mirror 
     {41,34,61,62,vL,vL},  //P0 Dining N6
     {42,40,vL,vL,vL,vL},  //P0 Dining N5
     {43,42,vL,vL,vL,vL},  //P0 Wardrobe 2
-    {44,vL,vL,vL,vL,vL},  //P0 Hall 3 
+    {44,32,vL,vL,vL,vL},  //P0 Hall 3 
     {45,0,vL,vL,vL,vL},   //P1 Antresola SypEZ 2                        
     {46,63,vL,vL,vL,vL},  //P0 Dining N4
     {47,22,vL,vL,vL,vL},   //P1 gosp door 2
