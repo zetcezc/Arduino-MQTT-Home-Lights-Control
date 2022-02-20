@@ -153,6 +153,7 @@ IPAddress mqttBrokerIp(192, 168, 1, 11); // MQTT broker IP adress
 #endif
 
 boolean mqttConnected = 0;
+unsigned long nowTime = 0;
 
 // create a multi Io that allocates the first "#define ArduinoPins" pins to arduino pins
 MultiIoAbstractionRef multiIo = multiIoExpander(ArduinoPins);
@@ -302,7 +303,7 @@ const uint8_t  button2leds[][maxNoOfLedsPerButton+1] PROGMEM =
     {19,41,vL,vL,vL,vL},  //P0 WC 1
     {22,45,vL,vL,vL,vL},  //P0 Dining N1
     {23,64,vL,vL,vL,vL},  //P0 TV blinds 2 - (kinkiet tyl=52)
-    {24,43,vL,vL,vL,vL},  //P0 Dining N2
+    {24,47,vL,vL,vL,vL},  //P0 Dining N2
     {25,64,vL,vL,vL,vL},  //P0 TV blinds 1
     {26,16,vL,vL,vL,vL},  //P1 Antresola bathroom 1
     {27,23,vL,vL,vL,vL},  //P0 Kitchen 2
@@ -357,7 +358,7 @@ const uint8_t  button2leds[][maxNoOfLedsPerButton+1] PROGMEM =
     {86,10,vL,vL,vL,vL},  //P1 Janek 1
     {87,0,vL,vL,vL,vL},  //P0 Stairs down 2
     //Here starts the expander 0x3A
-    {100,43,vL,vL,vL,vL},  //P0 Dining W2   
+    {100,47,vL,vL,vL,vL},  //P0 Dining W2   
     {101,11,vL,vL,vL,vL},  //P1 SypEZ 2
     {102,vL,vL,vL,vL,vL},  //NN
     {103,64,vL,vL,vL,vL},  //P0 TV 2  
@@ -562,7 +563,7 @@ void saveLedStatesToEeprom(uint8_t switchedLed, uint8_t ledState)
   
 }
 
-uint8_t isLedSmart(uint8_t key)
+uint8_t isSmartLed(uint8_t key)
 { uint8_t ledType = 0;
   for (size_t k=0; k<noOfLeds; k++)
   {
@@ -576,34 +577,15 @@ void onSwitchPressed(uint8_t key, bool held); //just the declaration here
 //Connect to MQTT broker
 boolean mqttConnect() 
 {
-  uint8_t count=0;
-  int waitTime=2000;
-  while (!mqttClient.connected() && count<5) 
+  if (mqttClient.connect("arduinoClient", mqttUser, mqttPasswd)) 
   {
-    Serial.print("Attempting MQTT connection...");
-    // Attempt to connect (5 times - each time wait 2 seconds longer than before)
-    if (mqttClient.connect("arduinoClient", mqttUser, mqttPasswd)) 
-    {
-      Serial.println("Connected");
-    } else 
-      {
-        Serial.print("failed, rc=");
-        Serial.print(mqttClient.state());
-        Serial.println(" try again in 2 seconds");
-        count++;
-        // wait 2 seconds to repeat
-        delay(count*waitTime);
-      }
-  }
-  if (count < 5) 
-  {
+    Serial.println("MQTT connected");
     return 1;
-  }
-  else
-  { 
-    Serial.println("MQTT Connection failed. Arduino only mode.");
-    return 0;
-  }
+  } else 
+    {
+      Serial.println("MQTT connecteion failed....");
+      return 0;
+    }
 }
 
 //subsribe to topic constructed of topic/key
@@ -633,18 +615,19 @@ void mqttPublishState(String topic, uint16_t key, uint8_t keyState)
   Serial.print("Key in mqqPublish = ");
   Serial.println(key);
   Serial.print("is led smart = ");
-  Serial.println(isLedSmart(key));
+  Serial.println(isSmartLed(key));
   if (key>=startLedNo) //this is for led
-    if (!isLedSmart(key))
-    {   doc["state"] = keyState ? "off" : "on";
-        Serial.print("keyState = ");
-        Serial.println(keyState);    
-        //doc1["brightness"] = 255;
-    }
-    else
-    { 
-      doc["on"] = true;
-      doc["incrementBrightness"]=25;
+    { if (isSmartLed(key) == 0)  //this is for standard led only
+      {   doc["state"] = keyState ? "off" : "on";
+          Serial.print("keyState = ");
+          Serial.println(keyState);    
+         //doc1["brightness"] = 255;
+      }
+      //else
+      //{ 
+      //  doc["on"] = true;
+      //  doc["incrementBrightness"]=25;
+      //}
     }
   else //this is for button
   {
@@ -690,43 +673,47 @@ void mqttPublishState(String topic, uint16_t key, uint8_t keyState)
 }
 
 
-void mqttSendAutoDiscovery(int16_t key, boolean turnON)
+void mqttSendAutoDiscovery(int16_t key, boolean autoDiscoveryOn)
 {   
   StaticJsonDocument<512> doc;
   String keyStr = String(key).c_str();
   String topicStr;
   String slash = "/";
-  if (key>=startLedNo)
-  {
-    doc["platform"] = "mqtt";
-    doc["schema"] = "template";
-    doc["uniq_id"] = "led_"+ keyStr;
-    for (uint8_t i=0; i<noOfLeds; i++)
+  if (key >= startLedNo) // for not smart leds only
+  { if(!autoDiscoveryOn)
     {
-      if (leds[i].ledNo == key) doc["name"] = leds[i].ledName;  
+      doc["platform"] = "mqtt";
+      doc["schema"] = "template";
+      doc["uniq_id"] = "led_"+ keyStr;
+      for (uint8_t i=0; i<noOfLeds; i++)
+      {
+        if (leds[i].ledNo == key) doc["name"] = leds[i].ledName;  
+      }
+      doc["cmd_t"] = ledSetTopic + slash + keyStr;
+      doc["stat_t"] = ledStateTopic + slash + keyStr;
+      doc["cmd_on_tpl"] = "{\"state\":\"on\"}";
+      doc["cmd_off_tpl"] = "{\"state\":\"off\"}";
+      doc["stat_tpl"] = "{{ value_json.state }}";
+      doc["qos"] = "1";
+      doc["retain"] = "FALSE";
     }
-    doc["cmd_t"] = ledSetTopic + slash + keyStr;
-    doc["stat_t"] = ledStateTopic + slash + keyStr;
-    doc["cmd_on_tpl"] = "{\"state\":\"on\"}";
-    doc["cmd_off_tpl"] = "{\"state\":\"off\"}";
-    doc["stat_tpl"] = "{{ value_json.state }}";
-    doc["qos"] = "1";
-    doc["retain"] = "FALSE";
     topicStr = "homeassistant/light/light_" + keyStr +"/config";
   }
   else
-  {
-    doc["platform"] = "mqtt";
-    doc["uniq_id"] = "button_"+keyStr;
-    doc["name"] = "Button Name";
-    for (uint8_t i=0; i<noOfButtons2; i++)
+  { if(!autoDiscoveryOn)
     {
-      if (buttons[i].buttonNo == key) doc["name"] = buttons[i].buttonName;  
+      doc["platform"] = "mqtt";
+      doc["uniq_id"] = "button_"+keyStr;
+      doc["name"] = "Button Name";
+      for (uint8_t i=0; i<noOfButtons2; i++)
+      {
+        if (buttons[i].buttonNo == key) doc["name"] = buttons[i].buttonName;  
+      }
+      doc["cmd_t"] = buttonSetTopic + slash + keyStr;
+      doc["payload_press"] = "{\"state\":\"pressed\"}";
+      doc["qos"] = "1";
+      doc["retain"] = "FALSE";
     }
-    doc["cmd_t"] = buttonSetTopic + slash + keyStr;
-    doc["payload_press"] = "{\"state\":\"pressed\"}";
-    doc["qos"] = "1";
-    doc["retain"] = "FALSE";
     topicStr = "homeassistant/button/button_" + keyStr +"/config";
   }
 
@@ -734,7 +721,7 @@ void mqttSendAutoDiscovery(int16_t key, boolean turnON)
   topicStr.toCharArray(topicChar,topicStr.length()+1);
   char payloadChar[512] = {"\0"};
   int b = 0;
-  if (turnON) 
+  if (autoDiscoveryOn) 
   {
     b = serializeJson(doc, payloadChar);
   }
@@ -795,24 +782,33 @@ void callback(char* topic, byte* payload, unsigned int length)
     }
   }
   else if (topicPrefixStr.equals(ledSetTopic)) 
-  {
-    if (payloadState.equals("1")||payloadState.equals("ON")||payloadState.equals("on"))
+  { if (isSmartLed(mqttKey))  //for standard leds
     {
-      payloadInt = ON;
-      ioDeviceDigitalWrite(multiIo, mqttKey, payloadInt);
-      saveLedStatesToEeprom(mqttKey,payloadInt); 
-      mqttPublishState(ledStateTopic, mqttKey, payloadInt);
-      Serial.println("Led turned on by MQTT message");
+      if (payloadState.equals("1")||payloadState.equals("ON")||payloadState.equals("on"))
+      {
+        payloadInt = ON;
+        ioDeviceDigitalWrite(multiIo, mqttKey, payloadInt);
+        saveLedStatesToEeprom(mqttKey,payloadInt); 
+        mqttPublishState(ledStateTopic, mqttKey, payloadInt);
+        Serial.println("Led turned on by MQTT message");
+      }
+      else if (payloadState.equals("0")||payloadState.equals("OFF")||payloadState.equals("off"))
+      {
+        payloadInt = OFF;
+        ioDeviceDigitalWrite(multiIo, mqttKey, payloadInt);
+        saveLedStatesToEeprom(mqttKey,payloadInt);
+        mqttPublishState(ledStateTopic, mqttKey, payloadInt);
+        Serial.println("Led turned off by MQTT message");
+      }
     }
-    else if (payloadState.equals("0")||payloadState.equals("OFF")||payloadState.equals("off"))
-    {
-      payloadInt = OFF;
-      ioDeviceDigitalWrite(multiIo, mqttKey, payloadInt);
-      saveLedStatesToEeprom(mqttKey,payloadInt);
-      mqttPublishState(ledStateTopic, mqttKey, payloadInt);
-      Serial.println("Led turned off by MQTT message");
-    }
+    else  //for smart leds
+    {}
   }
+}
+
+void setSmartLedViaMqtt(uint8_t key, boolean state, boolean held)
+{
+
 }
 
 
@@ -830,6 +826,7 @@ void onSwitchPressed(uint8_t key, bool held)
        for (size_t i=0; i<noOfLeds; i++)
             { if (leds[i].ledType!=0 && mqttConnected )
               { // set payload and publish to smart led
+                setSmartLedViaMqtt(leds[i].ledNo,OFF,held);
               } 
               else
               { ioDeviceDigitalWrite(multiIo, leds[i].ledNo, OFF);
@@ -844,7 +841,7 @@ void onSwitchPressed(uint8_t key, bool held)
             }
         ioDeviceSync(multiIo); // force another sync    
     } 
-    else 
+    else                //switching leds
     {
       for(size_t i=0; i<noOfButtons; i++)
       { if(pgm_read_byte(&(button2leds[i][0]))==key)
@@ -855,7 +852,9 @@ void onSwitchPressed(uint8_t key, bool held)
               if (leds[k].ledNo==button2leds[i][j]) {ledType = leds[k].ledType;}
             }
             if (ledType!=0 && mqttConnected )
-            { mqttPublishState(nodeRedLedTopic, pgm_read_byte(&(button2leds[i][j]))+startLedNo, ON);
+            { 
+              //mqttPublishState(nodeRedLedTopic, pgm_read_byte(&(button2leds[i][j]))+startLedNo, ON);
+              setSmartLedViaMqtt(leds[i].ledNo,ON,held);
             } 
             else
             { 
@@ -886,7 +885,10 @@ void onSwitchPressed(uint8_t key, bool held)
   }
 }
 
-
+void resetArduino()
+{
+  ioDeviceDigitalWriteS(multiIo, 6, ON);
+}
 
 // traditional arduino setup function
 void setup() {
@@ -898,8 +900,13 @@ void setup() {
   //Ethernet.init(53);
   Ethernet.begin(mac, ip, myDns);
   Serial.println(Ethernet.localIP()); //Print Arduino IP adddress
-  // Connnect to MQTT broker: 5 times every (2 * no of the try) seconds, then Arduino only mode
+  // Connnect to MQTT broker: Try twice.
   mqttConnected = mqttConnect();
+  if (!mqttConnected)
+  {
+    delay(2000);
+    mqttConnected = mqttConnect();
+  }
   // END Setup MQTT
   //Serial.println(sizeof(button2leds));
  
@@ -1022,4 +1029,9 @@ void loop()
 {
   taskManager.runLoop();
   mqttClient.loop();
+  if (!mqttConnected) 
+  {
+    nowTime = millis();
+    if (nowTime >= 60000UL) resetArduino();
+  }
 }
