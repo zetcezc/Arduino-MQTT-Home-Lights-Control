@@ -427,7 +427,7 @@ button buttons[] =
   {2,1,"CLR EEPROM"},
   {3,1,"All Leds OFF"},
 
-/*
+  /*
   {35,1,"Hall 1"},  
   {36,1,"Hall 2"},  
   //Hall 3 not working
@@ -736,6 +736,10 @@ void mqttSendAutoDiscovery(int16_t key, boolean autoDiscoveryOn)
   }
 }
 
+void setSmartLedViaMqtt(uint8_t key, boolean state, boolean held)
+{
+
+}
 
 
 
@@ -782,7 +786,7 @@ void callback(char* topic, byte* payload, unsigned int length)
     }
   }
   else if (topicPrefixStr.equals(ledSetTopic)) 
-  { if (isSmartLed(mqttKey))  //for standard leds
+  { if (isSmartLed(mqttKey) == 0)  //for standard leds
     {
       if (payloadState.equals("1")||payloadState.equals("ON")||payloadState.equals("on"))
       {
@@ -806,10 +810,6 @@ void callback(char* topic, byte* payload, unsigned int length)
   }
 }
 
-void setSmartLedViaMqtt(uint8_t key, boolean state, boolean held)
-{
-
-}
 
 
 // When the button is pressed then this function will be called (both hardware and MQTT button works).
