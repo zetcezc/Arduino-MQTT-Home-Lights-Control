@@ -255,7 +255,7 @@ const uint8_t  button2leds[][maxNoOfLedsPerButton+1] PROGMEM =
     {19,41,vL,vL,vL,vL},  //P0 WC 1
     {22,45,vL,vL,vL,vL},  //P0 Dining N1
     {23,52,vL,vL,vL,vL},  //P0 TV blinds 2
-    {24,43,vL,vL,vL,vL},  //P0 Dining N2
+    {24,47,vL,vL,vL,vL},  //P0 Dining N2
     {25,64,vL,vL,vL,vL},  //P0 TV blinds 1
     {26,16,vL,vL,vL,vL},  //P1 Antresola bathroom 1
     {27,23,vL,vL,vL,vL},  //P0 Kitchen 2
@@ -310,7 +310,7 @@ const uint8_t  button2leds[][maxNoOfLedsPerButton+1] PROGMEM =
     {86,10,vL,vL,vL,vL},  //P1 Janek 1
     {87,0,vL,vL,vL,vL},  //P0 Stairs down 2
     //Here starts the expander 0x3A
-    {100,43,vL,vL,vL,vL},  //P0 Dining W2   
+    {100,47,vL,vL,vL,vL},  //P0 Dining W2   
     {101,11,vL,vL,vL,vL},  //P1 SypEZ 2
     {102,vL,vL,vL,vL,vL},  //NN
     {103,52,vL,vL,vL,vL},  //P0 TV 2
